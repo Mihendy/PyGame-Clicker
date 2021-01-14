@@ -2,7 +2,6 @@ import pygame
 
 pygame.init()
 WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = pygame.display.Info().current_w, pygame.display.Info().current_h
-print(WINDOW_SIZE)
 pygame.quit()
 TIMER_EVENT = pygame.USEREVENT + 1
 AUTO_CLICK_EVENT = pygame.USEREVENT + 2
@@ -18,7 +17,7 @@ class Clicker:
         # для размеров скелета кликера.
         self.min_radius = min(WINDOW_WIDTH, WINDOW_HEIGHT) // 10
         self.max_radius = min(WINDOW_WIDTH, WINDOW_HEIGHT) // 5
-        self.radius = self.min_radius
+        self.radius = self.max_radius
         self.centre = (WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2)
         self.is_paused = False
         self.delay = 75
@@ -129,8 +128,44 @@ class Pause:
         return s
 
 
-class Shop(Clicker):
-    pass
+class Shop:
+    def __init__(self):
+        self.side = min(WINDOW_WIDTH, WINDOW_HEIGHT) // 10
+        self.ico = pygame.image.load('data/market.png')
+        self.ico_size = self.ico_w, self.ico_h = self.ico.get_size()
+        self.ico_copy = self.ico
+        self.skins = {"blue_neon.png": 3500,
+                      'earth.png': 5000,
+                      'kolobok.png': 3000,
+                      'purple_neon.png': 3000,
+                      'save_point.png': 4000
+                      }
+
+        self.colors = {'red': 0,
+                       'blue': 0,
+                       'green': 0,
+                       'light_gray': 300,
+                       'gray': 300,
+                       'dark_gray': 300,
+                       }
+
+        self.cursors = {}
+
+        self.backgrounds = {}
+
+        self.bought = []
+
+    def buy(self, money, obj, category):
+        if obj in self.bought:
+            return True, money
+        if category[obj] <= money:
+            self.bought.append(obj)
+            return True, money - category[obj]
+        return False, money
+
+    def render(self, screen):
+        self.ico_copy = pygame.transform.scale(self.ico, (self.ico_w // 5, self.ico_h // 5))
+        screen.blit(self.ico_copy, (int(WINDOW_WIDTH / 8 * 5), WINDOW_HEIGHT // 20))
 
 
 if __name__ == '__main__':
@@ -139,30 +174,30 @@ if __name__ == '__main__':
     pygame.display.set_caption('Clicker')
     clicker = Clicker()
     pause = Pause()
+    shop = Shop()
     clicker.set_skin('Skins/github_easter_egg.png')
 
     running = True
     x, y = 0, 0
-    image = pygame.image.load("Skins\cursor_green.png")
-    pygame.mouse.set_visible(False)
+    # image = pygame.image.load("Skins\cursor_green.png")
+    # pygame.mouse.set_visible(False)
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            if event.type == pygame.MOUSEMOTION:
-                x, y = event.pos
-
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                image = pygame.image.load("Skins\clicked_cursor_green.png")
-            if event.type == pygame.MOUSEBUTTONUP:
-                image = pygame.image.load("Skins\cursor_green.png")
+            # if event.type == pygame.MOUSEMOTION:
+            #     x, y = event.pos
+            # if event.type == pygame.MOUSEBUTTONDOWN:
+            #     image = pygame.image.load("Skins\clicked_cursor_green.png")
+            # if event.type == pygame.MOUSEBUTTONUP:
+            #     image = pygame.image.load("Skins\cursor_green.png")
             if clicker.is_paused:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_p:
                         clicker.switch_pause()
                         pygame.display.set_caption('Clicker')
             else:
-                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                     clicker.check_click(event.pos)
                 if event.type == TIMER_EVENT:
                     clicker.lose_mass()
@@ -174,11 +209,12 @@ if __name__ == '__main__':
                         pygame.display.set_caption('Clicker (paused)')
         screen.fill((50, 50, 50))
         clicker.render(screen)
+        shop.render(screen)
         if clicker.is_paused:
             screen.blit(pause.render(), (0, 0))
-        if image:
-            image = pygame.transform.scale(image, (WINDOW_WIDTH // 26, WINDOW_HEIGHT // 20))
-        screen.blit(image, (x - WINDOW_WIDTH // 26 // 3, y - WINDOW_HEIGHT // 20 // 3))
+        # if image:
+        #     image = pygame.transform.scale(image, (WINDOW_WIDTH // 26, WINDOW_HEIGHT // 20))
+        # screen.blit(image, (x - WINDOW_WIDTH // 26 // 3, y - WINDOW_HEIGHT // 20 // 3))
 
         pygame.display.flip()
     pygame.quit()
