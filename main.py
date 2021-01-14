@@ -1,7 +1,7 @@
 import pygame
 
 WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 1200, 900
-TIMER_EVENT_TYPE = 30
+TIMER_EVENT_TYPE = pygame.USEREVENT + 1
 
 
 class Clicker:
