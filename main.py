@@ -115,8 +115,7 @@ if __name__ == '__main__':
 
     running = True
     x, y = 0, 0
-    image = pygame.image.load(
-        "Skins\cursor-removebg-preview.png")
+    image = pygame.image.load("Skins\cursor_green.png")
     pygame.mouse.set_visible(False)
     while running:
         for event in pygame.event.get():
@@ -126,11 +125,9 @@ if __name__ == '__main__':
                 x, y = event.pos
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                image = pygame.image.load(
-                    "Skins\cursor-removebg-preview2.png")
+                image = pygame.image.load("Skins\clicked_cursor_green.png")
             if event.type == pygame.MOUSEBUTTONUP:
-                image = pygame.image.load(
-                    "Skins\cursor-removebg-preview.png")
+                image = pygame.image.load("Skins\cursor_green.png")
             if clicker.is_paused:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_p:
