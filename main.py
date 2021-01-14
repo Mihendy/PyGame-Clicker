@@ -1,7 +1,15 @@
 import pygame
 
-WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 1200, 900
-TIMER_EVENT_TYPE = pygame.USEREVENT + 1
+pygame.init()
+WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = pygame.display.Info().current_w, pygame.display.Info().current_h
+print(WINDOW_SIZE)
+pygame.quit()
+TIMER_EVENT = pygame.USEREVENT + 1
+AUTO_CLICK_EVENT = pygame.USEREVENT + 2
+
+
+def to_fixed(num_obj, digits=0):
+    return f"{num_obj:.{digits}f}"
 
 
 class Clicker:
@@ -14,11 +22,13 @@ class Clicker:
         self.centre = (WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2)
         self.is_paused = False
         self.delay = 75
-        pygame.time.set_timer(TIMER_EVENT_TYPE, self.delay)
+        pygame.time.set_timer(TIMER_EVENT, self.delay)
+        pygame.time.set_timer(AUTO_CLICK_EVENT, 1000)
         self.score = 0
         self.money = 100.0
         self.click = 1
         self.click_money = 0.2
+        self.cps = 0.5  # клики в секунду (clicks per second)
         self.skin = None
         self.skin_copy = None
         # self.min_skin_size, self.max_skin_size, self.skin_size - это
@@ -28,20 +38,20 @@ class Clicker:
         self.skin_size = (self.radius * 2, self.radius * 2)
 
     def render(self, screen):
-        # 1)==============ОЧКИ==============
-        font_size = 24
+        # 1)=============КЛИКИ==============
+        font_size = WINDOW_HEIGHT // 26
         font = pygame.font.Font("Fonts/beer money.ttf", font_size)
         font_color = (200, 200, 200)
-        text = font.render(f'Очки: {self.score}', True, font_color)
-        screen.blit(text, (40, 40))
+        text = font.render(f'Клики: {int(self.score)}', True, font_color)
+        screen.blit(text, (40, WINDOW_HEIGHT // 20))
         # ==================================
 
         # 2)=============МОНЕТЫ=============
-        font_size = 24
+        font_size = WINDOW_HEIGHT // 26
         font = pygame.font.Font("Fonts/beer money.ttf", font_size)
         font_color = (200, 200, 0)
         text = font.render(f'Монеты: {int(self.money)}', True, font_color)
-        screen.blit(text, (40, 80))
+        screen.blit(text, (40, WINDOW_HEIGHT // 20 * 2))
         # ==================================
 
         # 3)==============СКИН==============
@@ -49,6 +59,15 @@ class Clicker:
             screen.blit(self.skin_copy, (self.centre[0] - self.radius, self.centre[1] - self.radius))
         else:
             pygame.draw.circle(screen, (255, 0, 0), self.centre, self.radius)
+        # ==================================
+
+        # 4)========КЛИКИ В СЕКУНДУ=========
+        if self.cps:
+            font_size = WINDOW_HEIGHT // 26
+            font = pygame.font.Font("Fonts/beer money.ttf", font_size)
+            font_color = (200, 200, 200)
+            text = font.render(f'Клики в секунду: {to_fixed(self.cps, 2)}', True, font_color)
+            screen.blit(text, (40, WINDOW_HEIGHT // 20 * 3))
         # ==================================
 
     def check_click(self, position):
@@ -59,6 +78,8 @@ class Clicker:
         if d >= 0:
             self.radius = min(self.radius + 2, self.max_radius)
             self.skin_size = (self.radius * 2, self.radius * 2)
+            self.add_score()
+            self.add_money()
             if self.skin is not None:
                 self.skin_copy = pygame.transform.scale(self.skin, self.skin_size)
 
@@ -72,13 +93,18 @@ class Clicker:
     def switch_pause(self):
         """Включает/выключает паузу (подробнее в классе Pause)"""
         self.is_paused = not self.is_paused
-        pygame.time.set_timer(TIMER_EVENT_TYPE, self.delay if not self.is_paused else 0)
+        pygame.time.set_timer(TIMER_EVENT, self.delay if not self.is_paused else 0)
+        pygame.time.set_timer(AUTO_CLICK_EVENT, 1000 if not self.is_paused else 0)
 
     def add_score(self):
         self.score += self.click
 
     def add_money(self):
         self.money += self.click_money
+
+    def auto_add(self):
+        self.score += self.cps
+        self.money += (self.cps / 5)
 
     def set_skin(self, skin=None):
         if skin is None:
@@ -100,6 +126,10 @@ class Pause:
         s.fill((100, 100, 100, 100))
         s.blit(text, (40, 120))
         return s
+
+
+class Shop(Clicker):
+    pass
 
 
 if __name__ == '__main__':
@@ -125,10 +155,10 @@ if __name__ == '__main__':
                     running = False
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     clicker.check_click(event.pos)
-                    clicker.add_money()
-                    clicker.add_score()
-                if event.type == TIMER_EVENT_TYPE:
+                if event.type == TIMER_EVENT:
                     clicker.lose_mass()
+                if event.type == AUTO_CLICK_EVENT:
+                    clicker.auto_add()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_p:
                         clicker.switch_pause()
