@@ -153,7 +153,7 @@ if __name__ == '__main__':
             screen.blit(pause.render(), (0, 0))
         if image:
             image = pygame.transform.scale(image, (WINDOW_WIDTH // 26, WINDOW_HEIGHT // 20))
-        screen.blit(image, (x - 45 // 3, y - 30 // 3))
+        screen.blit(image, (x - WINDOW_WIDTH // 26 // 3, y - WINDOW_HEIGHT // 20 // 3))
 
         pygame.display.flip()
     pygame.quit()
