@@ -1,6 +1,6 @@
 import pygame
 
-WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 1200, 900
+WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 1200, 600
 TIMER_EVENT_TYPE = pygame.USEREVENT + 1
 
 
@@ -46,7 +46,8 @@ class Clicker:
 
         # 3)==============СКИН==============
         if self.skin_copy is not None:
-            screen.blit(self.skin_copy, (self.centre[0] - self.radius, self.centre[1] - self.radius))
+            screen.blit(self.skin_copy, (
+                self.centre[0] - self.radius, self.centre[1] - self.radius))
         else:
             pygame.draw.circle(screen, (255, 0, 0), self.centre, self.radius)
         # ==================================
@@ -60,7 +61,8 @@ class Clicker:
             self.radius = min(self.radius + 2, self.max_radius)
             self.skin_size = (self.radius * 2, self.radius * 2)
             if self.skin is not None:
-                self.skin_copy = pygame.transform.scale(self.skin, self.skin_size)
+                self.skin_copy = pygame.transform.scale(self.skin,
+                                                        self.skin_size)
 
     def lose_mass(self):
         """Уменьшает радиус круга со временем (анимация)"""
@@ -72,7 +74,8 @@ class Clicker:
     def switch_pause(self):
         """Включает/выключает паузу (подробнее в классе Pause)"""
         self.is_paused = not self.is_paused
-        pygame.time.set_timer(TIMER_EVENT_TYPE, self.delay if not self.is_paused else 0)
+        pygame.time.set_timer(TIMER_EVENT_TYPE,
+                              self.delay if not self.is_paused else 0)
 
     def add_score(self):
         self.score += self.click
@@ -111,18 +114,29 @@ if __name__ == '__main__':
     clicker.set_skin('Skins/github_easter_egg.png')
 
     running = True
+    x, y = 0, 0
+    image = pygame.image.load(
+        "Skins\cursor-removebg-preview.png")
+    pygame.mouse.set_visible(False)
     while running:
         for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.MOUSEMOTION:
+                x, y = event.pos
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                image = pygame.image.load(
+                    "Skins\cursor-removebg-preview2.png")
+            if event.type == pygame.MOUSEBUTTONUP:
+                image = pygame.image.load(
+                    "Skins\cursor-removebg-preview.png")
             if clicker.is_paused:
-                if event.type == pygame.QUIT:
-                    running = False
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_p:
                         clicker.switch_pause()
                         pygame.display.set_caption('Clicker')
             else:
-                if event.type == pygame.QUIT:
-                    running = False
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     clicker.check_click(event.pos)
                     clicker.add_money()
@@ -137,5 +151,9 @@ if __name__ == '__main__':
         clicker.render(screen)
         if clicker.is_paused:
             screen.blit(pause.render(), (0, 0))
+        if image:
+            image = pygame.transform.scale(image, (WINDOW_WIDTH // 26, WINDOW_HEIGHT // 20))
+        screen.blit(image, (x - 45 // 3, y - 30 // 3))
+
         pygame.display.flip()
     pygame.quit()
