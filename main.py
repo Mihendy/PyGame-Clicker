@@ -1,7 +1,7 @@
 import pygame
 
 pygame.init()
-WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = pygame.display.Info().current_w, pygame.display.Info().current_h
+WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = pygame.display.Info().current_w - 100, pygame.display.Info().current_h - 100
 pygame.quit()
 TIMER_EVENT = pygame.USEREVENT + 1
 AUTO_CLICK_EVENT = pygame.USEREVENT + 2
@@ -179,18 +179,18 @@ if __name__ == '__main__':
 
     running = True
     x, y = 0, 0
-    # image = pygame.image.load("Skins\cursor_green.png")
-    # pygame.mouse.set_visible(False)
+    image = pygame.image.load("Skins\cursor_green.png")
+    pygame.mouse.set_visible(False)
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            # if event.type == pygame.MOUSEMOTION:
-            #     x, y = event.pos
-            # if event.type == pygame.MOUSEBUTTONDOWN:
-            #     image = pygame.image.load("Skins\clicked_cursor_green.png")
-            # if event.type == pygame.MOUSEBUTTONUP:
-            #     image = pygame.image.load("Skins\cursor_green.png")
+            if event.type == pygame.MOUSEMOTION:
+                x, y = event.pos
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                image = pygame.image.load("Skins\clicked_cursor_green.png")
+            if event.type == pygame.MOUSEBUTTONUP:
+                image = pygame.image.load("Skins\cursor_green.png")
             if clicker.is_paused:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_p:
@@ -212,9 +212,9 @@ if __name__ == '__main__':
         shop.render(screen)
         if clicker.is_paused:
             screen.blit(pause.render(), (0, 0))
-        # if image:
-        #     image = pygame.transform.scale(image, (WINDOW_WIDTH // 26, WINDOW_HEIGHT // 20))
-        # screen.blit(image, (x - WINDOW_WIDTH // 26 // 3, y - WINDOW_HEIGHT // 20 // 3))
+        if image:
+            image = pygame.transform.scale(image, (WINDOW_WIDTH // 26, WINDOW_HEIGHT // 20))
+        screen.blit(image, (x - WINDOW_WIDTH // 26 // 3, y - WINDOW_HEIGHT // 20 // 3))
 
         pygame.display.flip()
     pygame.quit()
