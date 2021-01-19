@@ -3,7 +3,7 @@ import pygame
 pygame.init()
 WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = pygame.display.Info().current_w, \
                                             pygame.display.Info().current_h
-print(pygame.display.Info().current_h, pygame.display.Info().current_w)
+print(pygame.display.Info().current_w, pygame.display.Info().current_h)
 pygame.quit()
 TIMER_EVENT = pygame.USEREVENT + 1
 AUTO_CLICK_EVENT = pygame.USEREVENT + 2
@@ -118,56 +118,65 @@ class Clicker:
 
 
 class Button:
-    def __init__(self, form, position, enter_pos=None):
-        x, y, w, h = position
-        self.enter_pos = enter_pos
+    def __init__(self, form, position, cursor_pos=None, text=('', None, None), click_event=False):
+        self.x, self.y, self.width, self.height = position
+        self.cursor_pos = cursor_pos
+        self.click_event = click_event
         self.form = form
-        self.pause_button_size = WINDOW_WIDTH // 3, WINDOW_HEIGHT // 13.32
-        self.font_size = 24
-        self.active_clr = (61, 0, 153, 10)
-        self.font = pygame.font.Font("Fonts/beer money.ttf", self.font_size)
         self.font_color = (255, 255, 255)
-        self.x, self.y = x, y
-        self.width = w
-        self.height = h
-        coeff_x, coeff_y = 0, 0
-        if self.enter_pos is not None:
-            coeff_x = 25
-            coeff_y = 10
+        self.font_size = 24
+        self.alpha = 230
+        self.pause_button_size = WINDOW_WIDTH // 3, WINDOW_HEIGHT // 13.32
+        self.active_clr = (61, 0, 153, self.alpha)
+        self.coeff_x, self.coeff_y = 0, 0
+
+        self.my_eventFilter()
+        # if self.check_button_enter(self.cursor_pos, (self.x, self.y,
+        #                                              self.x + self.width,
+        #                                              self.y + self.height)):
+        #     self.coeff_x = int(WINDOW_WIDTH // 54.64)
+        #     self.coeff_y = int(WINDOW_HEIGHT // 76.8)
+        #     self.font_size = self.font_size + self.coeff_x // 5
         pygame.draw.rect(self.form,
                          self.active_clr,
-                         (self.x - coeff_x, self.y - coeff_y,
-                          self.width + coeff_x, self.height + coeff_y),
+                         (self.x, self.y,
+                          self.width, self.height),
                          width=0,
                          border_radius=15)
         pygame.draw.rect(self.form,
-                         (self.active_clr[0], self.active_clr[1], self.active_clr[2], 255),
-                         (self.x, self.y, self.width, self.height),
-                         width=5,
-                         border_radius=15)
+                         'black',
+                         (self.x, self.y,
+                          self.width, self.height),
+                         width=self.width // (self.width // 5),
+                         border_radius=self.width // (self.width // 15))
 
-    def draw_button(self, num, entered=None):
-        coeff_x, coeff_y = 0, 0
-        if entered_button == entered and entered is not None:
-            coeff_x = 25
-            coeff_y = 10
-        pygame.draw.rect(self.form, self.active_clr, (WINDOW_WIDTH // 3.3 - coeff_x,
-                                                      self.buttons_titles[num][1]
-                                                      - coeff_y,
-                                                      self.pause_button_size[0] + coeff_x * 2,
-                                                      self.pause_button_size[1] + coeff_y * 2),
-                         width=0, border_radius=15)
-        pygame.draw.rect(self.form, 'black', (WINDOW_WIDTH // 3.3 - coeff_x,
-                                              self.buttons_titles[num][1]
-                                              - coeff_y,
-                                              self.pause_button_size[0] + coeff_x * 2,
-                                              self.pause_button_size[1] + coeff_y * 2),
-                         width=5, border_radius=15)
-        text = self.font.render(self.buttons_titles[num][0], True, self.font_color)
-        screen.blit(text, self.buttons_titles[num][2])
+        self.font = pygame.font.Font("Fonts/beer money.ttf", self.font_size)
+        self.text = self.font.render(text[0], True, self.font_color)
+        screen.blit(self.text, (text[1] - self.coeff_x // 5 * len(text[0]) // 2,
+                                text[2] - self.coeff_y // 5 * 2))
 
-    def check_button_click(self, click_pos, button_pos):
-        """Функция проверяет наличие курсора в поле кнопки"""
+    def my_eventFilter(self):
+        if self.check_button_enter(self.cursor_pos, (self.x, self.y,
+                                                     self.x + self.width,
+                                                     self.y + self.height)):
+            self.coeff_x = 25
+            self.coeff_y = 10
+            self.x -= self.coeff_x
+            self.y -= self.coeff_y
+            self.width += self.coeff_x * 2
+            self.height += self.coeff_y * 2
+            self.font_size = self.font_size + self.coeff_x // 5
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                self.active_clr = (255, 255, 255, self.alpha)
+                self.font_color = (61, 0, 153, self.alpha)
+            if event.type == pygame.MOUSEBUTTONUP:
+                self.font_color = (255, 255, 255)
+                self.active_clr = (61, 0, 153, self.alpha)
+
+    def check_button_enter(self, click_pos, button_pos):
+        """Функция проверяет наличие над кнопкой курсора"""
+        if click_pos is None:
+            return False
         x, y = click_pos
         x1, y1, x2, y2 = button_pos
         if x in range(int(x1), int(x2)) and y in range(int(y1), int(y2)):
@@ -178,51 +187,38 @@ class Button:
 class Pause:
     def __init__(self):
         self.active_clr = (61, 0, 153, 10)
-        # self.width, self.height = WINDOW_WIDTH, WINDOW_HEIGHT
 
-    def render(self, entered_btn=None):
-        self.font_size = 24
+    def render(self, pos_cursor=None):
+        self.font_size = WINDOW_WIDTH // (WINDOW_WIDTH // 24)
         self.font = pygame.font.Font("Fonts/beer money.ttf", self.font_size)
         self.font_color = (255, 255, 255)
         text = self.font.render('Игра на паузе', True, self.font_color)
         self.s = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
 
-        self.s.fill((0, 0, 0, 100))
-        self.s.blit(text, (40, 120))
+        self.s.fill((100, 100, 100, 100))
+        self.s.blit(text, (WINDOW_WIDTH // (WINDOW_WIDTH // 40),
+                           WINDOW_HEIGHT // WINDOW_HEIGHT // 120))
         self.pause_button_size = WINDOW_WIDTH // 3, WINDOW_HEIGHT // 13.32
         self.buttons_titles = {
-            0: ('Продолжить игру', 250, (560, 260)),
-            1: ('Настройки', 350, (595, 360)),
-            2: ('Выйти', 450, (615, 460))
+            0: ('Продолжить игру', 250, (550, 260)),
+            1: ('Настройки', 350, (590, 360)),
+            2: ('Выйти', 450, (610, 460))
         }
-        if entered_btn is None:
-            self.draw_buttons()
-        else:
-            self.draw_buttons(entered=entered_btn)
+        self.pos_cursor = pos_cursor
+        self.draw_buttons()
         return self.s
 
-    def draw_buttons(self, entered=None):
+    def draw_buttons(self):
+        """Функция рисует кнопки в меню паузы"""
         for i in range(3):
-            coeff_x, coeff_y = 0, 0
-            if entered_button == entered and entered is not None:
-                coeff_x = 25
-                coeff_y = 10
-            pygame.draw.rect(self.s, self.active_clr, (WINDOW_WIDTH // 3.3 - coeff_x,
-                                                       self.buttons_titles[i][1]
-                                                       - coeff_y,
-                                                       self.pause_button_size[0] + coeff_x * 2,
-                                                       self.pause_button_size[1] + coeff_y * 2),
-                             width=0, border_radius=15)
-            pygame.draw.rect(self.s, 'black', (WINDOW_WIDTH // 3.3 - coeff_x,
-                                               self.buttons_titles[i][1]
-                                               - coeff_y,
-                                               self.pause_button_size[0] + coeff_x * 2,
-                                               self.pause_button_size[1] + coeff_y * 2),
-                             width=5, border_radius=15)
-            text = self.font.render(self.buttons_titles[i][0], True, self.font_color)
-            self.s.blit(text, self.buttons_titles[i][2])
+            Button(screen, (WINDOW_WIDTH // 3.3,
+                            self.buttons_titles[i][1],
+                            self.pause_button_size[0],
+                            self.pause_button_size[1]),
+                   cursor_pos=self.pos_cursor,
+                   text=(self.buttons_titles[i][0], *self.buttons_titles[i][-1]))
 
-    def check_button_click(self, click_pos, button_pos):
+    def check_button_enter(self, click_pos, button_pos):
         """Функция проверяет наличие курсора в поле кнопки"""
         x, y = click_pos
         x1, y1, x2, y2 = button_pos
@@ -281,30 +277,27 @@ if __name__ == '__main__':
     clicker.set_skin('Skins/github_easter_egg.png')
 
     running = True
-    x, y = 0, 0
+    x, y = None, None
     # image = pygame.image.load("Skins\cursor_green.png")
     image = pygame.image.load('Skins\cursor_blue.png')
     pygame.mouse.set_visible(False)
-    entered_button = None
+    cursor_on_btn = False
+    click = False
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.MOUSEMOTION:
                 x, y = event.pos
+                cursor_on_btn = False
                 if clicker.is_paused:
-                    entered_button = None
-                    for i in range(3):
-                        if pause.check_button_click((x, y), (pause.buttons_titles[i][-1][0],
-                                                             pause.buttons_titles[i][-1][1],
-                                                             pause.buttons_titles[i][-1][0] +
-                                                             pause.pause_button_size[0],
-                                                             pause.buttons_titles[i][-1][1] +
-                                                             pause.pause_button_size[1])):
-                            entered_button = i + 1
+                    cursor_on_btn = True
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 image = pygame.image.load("Skins\clicked_cursor_blue.png")
+                click = False
+                if clicker.is_paused:
+                    click = True
                 # image = pygame.image.load("Skins\clicked_cursor_green.png")
             if event.type == pygame.MOUSEBUTTONUP:
                 # image = pygame.image.load("Skins\cursor_green.png")
@@ -329,8 +322,8 @@ if __name__ == '__main__':
         clicker.render(screen)
         shop.render(screen)
         if clicker.is_paused:
-            if entered_button is not None:
-                screen.blit(pause.render(entered_btn=entered_button), (0, 0))
+            if cursor_on_btn:
+                screen.blit(pause.render(pos_cursor=(x, y)), (0, 0))
             else:
                 screen.blit(pause.render(), (0, 0))
 
