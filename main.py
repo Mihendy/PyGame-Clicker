@@ -123,7 +123,9 @@ class Button:
     def __init__(self, form, position, cursor_pos=None, text=('', None, None), click_event=False):
         """Инициализация и отрисовка кнопки на форме"""
         # self, форма на которой рисуется кнопка, координаты верхней левой и правой нижней точек
-        # кнопки,
+        # кнопки, позиция курсора в данный момент, текст кнопки и его координаты,
+        # факт нажатия на кнопку
+        self.title = text[0]
         self.x, self.y, self.width, self.height = position
         self.cursor_pos = cursor_pos
         self.click_event = click_event
@@ -169,6 +171,12 @@ class Button:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 self.active_clr = (255, 255, 255, self.alpha)
                 self.font_color = (61, 0, 153, self.alpha)
+                if self.title == 'Продолжить игру':
+                    clicker.switch_pause()
+                elif self.title == 'Выйти':
+                    pygame.quit()
+                elif self.title == 'Настройки':
+                    print('В Разработке...')
             if event.type == pygame.MOUSEBUTTONUP:
                 self.font_color = (255, 255, 255)
                 self.active_clr = (61, 0, 153, self.alpha)
@@ -278,12 +286,14 @@ if __name__ == '__main__':
 
     running = True
     x, y = None, None
-    # image = pygame.image.load("Skins\cursor_green.png")
-    image = pygame.image.load('Skins\cursor_blue.png')
+    image = pygame.image.load("Skins\cursor_green.png")
+    # image = pygame.image.load('Skins\cursor_blue.png')
     image2 = False
     pygame.mouse.set_visible(False)
     cursor_on_btn = False
     click = False
+    clock = pygame.time.Clock()
+
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -295,14 +305,13 @@ if __name__ == '__main__':
                     cursor_on_btn = True
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                image2 = pygame.image.load("Skins\clicked_cursor_blue.png")
+                image2 = pygame.image.load("Skins\click_effect.png")
                 click = False
                 if clicker.is_paused:
                     click = True
-                # image = pygame.image.load("Skins\clicked_cursor_green.png")
             if event.type == pygame.MOUSEBUTTONUP:
-                # image = pygame.image.load("Skins\cursor_green.png")
-                image = pygame.image.load("Skins\cursor_blue.png")
+                image = pygame.image.load("Skins\cursor_green.png")
+                # image = pygame.image.load("Skins\cursor_blue.png")
                 image2 = False
             if clicker.is_paused:
                 if event.type == pygame.KEYDOWN:
