@@ -118,7 +118,12 @@ class Clicker:
 
 
 class Button:
+    """Класс кнопки"""
+
     def __init__(self, form, position, cursor_pos=None, text=('', None, None), click_event=False):
+        """Инициализация и отрисовка кнопки на форме"""
+        # self, форма на которой рисуется кнопка, координаты верхней левой и правой нижней точек
+        # кнопки,
         self.x, self.y, self.width, self.height = position
         self.cursor_pos = cursor_pos
         self.click_event = click_event
@@ -131,12 +136,6 @@ class Button:
         self.coeff_x, self.coeff_y = 0, 0
 
         self.my_eventFilter()
-        # if self.check_button_enter(self.cursor_pos, (self.x, self.y,
-        #                                              self.x + self.width,
-        #                                              self.y + self.height)):
-        #     self.coeff_x = int(WINDOW_WIDTH // 54.64)
-        #     self.coeff_y = int(WINDOW_HEIGHT // 76.8)
-        #     self.font_size = self.font_size + self.coeff_x // 5
         pygame.draw.rect(self.form,
                          self.active_clr,
                          (self.x, self.y,
@@ -156,6 +155,7 @@ class Button:
                                 text[2] - self.coeff_y // 5 * 2))
 
     def my_eventFilter(self):
+        """EventFilter, в котором происходит обработка событий"""
         if self.check_button_enter(self.cursor_pos, (self.x, self.y,
                                                      self.x + self.width,
                                                      self.y + self.height)):
@@ -280,6 +280,7 @@ if __name__ == '__main__':
     x, y = None, None
     # image = pygame.image.load("Skins\cursor_green.png")
     image = pygame.image.load('Skins\cursor_blue.png')
+    image2 = False
     pygame.mouse.set_visible(False)
     cursor_on_btn = False
     click = False
@@ -294,7 +295,7 @@ if __name__ == '__main__':
                     cursor_on_btn = True
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                image = pygame.image.load("Skins\clicked_cursor_blue.png")
+                image2 = pygame.image.load("Skins\clicked_cursor_blue.png")
                 click = False
                 if clicker.is_paused:
                     click = True
@@ -302,6 +303,7 @@ if __name__ == '__main__':
             if event.type == pygame.MOUSEBUTTONUP:
                 # image = pygame.image.load("Skins\cursor_green.png")
                 image = pygame.image.load("Skins\cursor_blue.png")
+                image2 = False
             if clicker.is_paused:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_p:
@@ -329,7 +331,10 @@ if __name__ == '__main__':
 
         if image:
             image = pygame.transform.scale(image, (WINDOW_WIDTH // 26, WINDOW_HEIGHT // 20))
-        screen.blit(image, (x - WINDOW_WIDTH // 26 // 3, y - WINDOW_HEIGHT // 20 // 3))
+            screen.blit(image, (x - WINDOW_WIDTH // 26 // 3, y - WINDOW_HEIGHT // 20 // 3))
+        if image2:
+            image2 = pygame.transform.scale(image2, (WINDOW_WIDTH // 26, WINDOW_HEIGHT // 20))
+            screen.blit(image2, (x - WINDOW_WIDTH // 26 // 3, y - WINDOW_HEIGHT // 20 // 3))
 
         pygame.display.flip()
     pygame.quit()
