@@ -1,4 +1,5 @@
 import pygame
+import dbSaver
 
 pygame.init()
 WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = pygame.display.Info().current_w, \
@@ -14,62 +15,66 @@ def to_fixed(num_obj, digits=0):
 
 
 class Clicker:
-    def __init__(self):
+    def __init__(self, values=None):
+        if values is None:
+            self.is_paused = False
+            self.score = 0
+            self.money = 100.0
+            self.click = 1
+            self.click_money = 0.2
+            self.cps = 0.5  # клики в секунду (clicks per second)
+            self.skin_path = None
+        else:
+            self.is_paused, self.score, self.money, self.click, self.click_money, self.cps, self.skin_path = values
         # self.min_radius, self.max_radius, self.radius - это значения
         # для размеров скелета кликера.
+        self.font_size = WINDOW_HEIGHT // 26
         self.min_radius = min(WINDOW_WIDTH, WINDOW_HEIGHT) // 10
         self.max_radius = min(WINDOW_WIDTH, WINDOW_HEIGHT) // 5
-        self.radius = self.max_radius
+        self.radius = self.min_radius
         self.centre = (WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2)
-        self.is_paused = False
         self.delay = 75
-        pygame.time.set_timer(TIMER_EVENT, self.delay)
-        pygame.time.set_timer(AUTO_CLICK_EVENT, 1000)
-        self.score = 0
-        self.money = 100.0
-        self.click = 1
-        self.click_money = 0.2
-        self.cps = 0.5  # клики в секунду (clicks per second)
-        self.skin = None
-        self.skin_copy = None
         # self.min_skin_size, self.max_skin_size, self.skin_size - это
         # аналоги значений скелета кликера, но уже для скина.
+        self.skin_copy = None
+        self.skin = None
         self.min_skin_size = (self.min_radius * 2, self.min_radius * 2)
         self.max_skin_size = (self.max_radius * 2, self.max_radius * 2)
         self.skin_size = (self.radius * 2, self.radius * 2)
+        pygame.time.set_timer(TIMER_EVENT, self.delay)
+        pygame.time.set_timer(AUTO_CLICK_EVENT, 1000)
 
     def render(self, screen):
         # 1)=============КЛИКИ==============
-        self.font_size = WINDOW_HEIGHT // 26
-        self.font = pygame.font.Font("Fonts/beer money.ttf", self.font_size)
-        self.font_color = (200, 200, 200)
-        text = self.font.render(f'Клики: {int(self.score)}', True, self.font_color)
+        font = pygame.font.Font("Fonts/beer money.ttf", self.font_size)
+        font_color = (200, 200, 200)
+        text = font.render(f'Клики: {int(self.score)}', True, font_color)
         screen.blit(text, (40, WINDOW_HEIGHT // 20))
         # ==================================
 
         # 2)=============МОНЕТЫ=============
-        self.font_size = WINDOW_HEIGHT // 26
-        self.font = pygame.font.Font("Fonts/beer money.ttf", self.font_size)
-        self.font_color = (200, 200, 0)
-        text = self.font.render(f'Монеты: {int(self.money)}', True, self.font_color)
+        font = pygame.font.Font("Fonts/beer money.ttf", self.font_size)
+        font_color = (200, 200, 0)
+        text = font.render(f'Монеты: {int(self.money)}', True, font_color)
         screen.blit(text, (40, WINDOW_HEIGHT // 20 * 2))
         # ==================================
 
         # 3)==============СКИН==============
-        if self.skin_copy is not None:
-            screen.blit(self.skin_copy, (
-                self.centre[0] - self.radius, self.centre[1] - self.radius))
-        else:
+        if self.skin_path is None:
             pygame.draw.circle(screen, (255, 0, 0), self.centre, self.radius)
+        if self.skin is None and self.skin_path is not None:
+            self.skin = pygame.image.load(self.skin_path)
+        if self.skin is not None:
+            self.skin_copy = pygame.transform.scale(self.skin, self.skin_size)
+            screen.blit(self.skin_copy, (self.centre[0] - self.radius, self.centre[1] - self.radius))
         # ==================================
 
         # 4)========КЛИКИ В СЕКУНДУ=========
         if self.cps:
-            self.font_size = WINDOW_HEIGHT // 26
-            self.font = pygame.font.Font("Fonts/beer money.ttf", self.font_size)
-            self.font_color = (200, 200, 200)
-            text = self.font.render(f'Клики в секунду: {to_fixed(self.cps, 2)}', True,
-                                    self.font_color)
+            font = pygame.font.Font("Fonts/beer money.ttf", self.font_size)
+            font_color = (200, 200, 200)
+            text = font.render(f'Клики в секунду: {to_fixed(self.cps, 2)}', True,
+                               font_color)
             screen.blit(text, (40, WINDOW_HEIGHT // 20 * 3))
         # ==================================
 
@@ -111,10 +116,11 @@ class Clicker:
         self.money += (self.cps / 5)
 
     def set_skin(self, skin=None):
-        if skin is None:
-            self.skin = skin
-        else:
-            self.skin = pygame.image.load(skin)
+        self.skin_path = skin
+
+    def to_save_info(self):
+        """Метод этого класса вернёт список с информацией о данном классе (нужна для работы с БД)"""
+        return [self.is_paused, self.score, self.money, self.click, self.click_money, self.cps, self.skin_path]
 
 
 class Button:
@@ -279,10 +285,15 @@ if __name__ == '__main__':
     pygame.init()
     screen = pygame.display.set_mode(WINDOW_SIZE)
     pygame.display.set_caption('Clicker')
-    clicker = Clicker()
+    try:
+        data = dbSaver.download('data/save_data_1.db')
+        clicker = Clicker(data)
+    except FileNotFoundError:
+        clicker = Clicker()
     pause = Pause()
     shop = Shop()
     clicker.set_skin('Skins/github_easter_egg.png')
+    print(clicker.to_save_info())
 
     running = True
     x, y = None, None
@@ -297,13 +308,14 @@ if __name__ == '__main__':
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                clicker.is_paused = False
+                dbSaver.upload('data/save_data_1.db', clicker.to_save_info())
                 running = False
             if event.type == pygame.MOUSEMOTION:
                 x, y = event.pos
                 cursor_on_btn = False
                 if clicker.is_paused:
                     cursor_on_btn = True
-
             if event.type == pygame.MOUSEBUTTONDOWN:
                 image2 = pygame.image.load("Skins\click_effect.png")
                 click = False
