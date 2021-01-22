@@ -195,10 +195,12 @@ class Button:
                     print('Настройки в разработке..')
                 elif self.title == 'Магазин':
                     global right_menu_is_showing
-                    if not right_menu_is_showing and click_timer():
-                        right_menu_is_showing = True
-                    elif click_timer():
-                        right_menu_is_showing = False
+                    # if not right_menu_is_showing and click_timer():
+                    #     right_menu_is_showing = True
+                    # elif click_timer():
+                    #     right_menu_is_showing = False
+                    right_menu_is_showing = not right_menu_is_showing
+                    print('change')
             if event.type == pygame.MOUSEMOTION:
                 self.font_color = (255, 255, 255)
                 self.active_clr = (42, 82, 190, self.alpha)
@@ -206,7 +208,8 @@ class Button:
                 self.font_color = (255, 255, 255)
                 self.active_clr = (42, 82, 190, self.alpha)
 
-    def check_button_enter(self, click_pos, button_pos):
+    @staticmethod
+    def check_button_enter(click_pos, button_pos):
         """Функция проверяет наличие над кнопкой курсора"""
         if click_pos is None:
             return False
@@ -220,22 +223,21 @@ class Button:
 class Pause:
     def __init__(self):
         self.active_clr = (61, 0, 153, 10)
-
-    def render(self):
         self.font_size = WINDOW_WIDTH // (WINDOW_WIDTH // 24)
-        self.font = pygame.font.Font("Fonts/beer money.ttf", self.font_size)
-        self.font_color = (255, 255, 255)
-        text = self.font.render('Игра на паузе', True, self.font_color)
-
-        SURFACE.fill((100, 100, 100, 100))
-        SURFACE.blit(text, (WINDOW_WIDTH // (WINDOW_WIDTH // 40),
-                            WINDOW_HEIGHT // WINDOW_HEIGHT // 120))
         self.pause_button_size = WINDOW_WIDTH // 3, WINDOW_HEIGHT // 13.32
         self.buttons_titles = {
             0: ('Продолжить игру', 250, (550, 260)),
             1: ('Настройки', 350, (590, 360)),
             2: ('Выйти', 450, (610, 460))
         }
+
+    def render(self):
+        font = pygame.font.Font("Fonts/beer money.ttf", self.font_size)
+        font_color = (255, 255, 255)
+        text = font.render('Игра на паузе', True, font_color)
+        SURFACE.fill((100, 100, 100, 100))
+        SURFACE.blit(text, (WINDOW_WIDTH // (WINDOW_WIDTH // 40),
+                            WINDOW_HEIGHT // WINDOW_HEIGHT // 120))
         self.draw_buttons()
         return SURFACE
 
@@ -260,20 +262,20 @@ class Pause:
 
 
 class RightMenu:
-    def __init__(self):
+    def __init__(self, a):
         self.width, self.height = WINDOW_WIDTH // 3, WINDOW_HEIGHT - 50
         self.color = (20, 20, 20)
         self.pos = (WINDOW_WIDTH - WINDOW_WIDTH // 3, 25)
-        points = [(self.pos[0] + 100, self.pos[1]), (self.pos[0], self.pos[1] + self.height),
-                  (self.pos[0] + self.width, self.pos[1] + self.height),
-                  (self.pos[0] + self.width, self.pos[1])]
+        points = [(self.pos[0] + 100 + a, self.pos[1]), (self.pos[0] + a, self.pos[1] + self.height),
+                  (self.pos[0] + self.width + a, self.pos[1] + self.height),
+                  (self.pos[0] + self.width + a, self.pos[1])]
         pygame.draw.polygon(screen, self.color, points, width=0)
-        skins_button = Button(screen, (self.pos[0] - 25, self.pos[1] + 655, 210, 75),
-                              text='Скины', text_coords=(self.pos[0] + 50, self.pos[1] + 655 + 20),
+        skins_button = Button(screen, (self.pos[0] - 25 + a, self.pos[1] + 655, 210, 75),
+                              text='Скины', text_coords=(self.pos[0] + 50 + a, self.pos[1] + 655 + 20),
                               cursor_pos=(x, y))
-        boosters_button = Button(screen, (self.pos[0] + 225, self.pos[1] + 655, 210, 75),
+        boosters_button = Button(screen, (self.pos[0] + 225 + a, self.pos[1] + 655, 210, 75),
                                  text='Ускорители',
-                                 text_coords=(self.pos[0] + 285, self.pos[1] + 655 + 20),
+                                 text_coords=(self.pos[0] + 285 + a, self.pos[1] + 655 + 20),
                                  cursor_pos=(x, y))
 
 
@@ -340,21 +342,18 @@ if __name__ == '__main__':
     shop = Shop()
     clicker.set_skin('Skins/github_easter_egg.png')
     print(clicker.to_save_info())
-
     running = True
     right_menu_is_showing = False
     image2 = False
     take_pause = False
     click = False
     x, y = None, None
-
     # image = pygame.image.load("Skins\cursor_green.png")
     image = pygame.image.load('Skins\cursor_blue.png')
-
+    v = WINDOW_WIDTH  # пикселей в секунду
+    a = WINDOW_WIDTH // 2
     clock = pygame.time.Clock()
-
     while running:
-
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 clicker.is_paused = False
@@ -365,7 +364,6 @@ if __name__ == '__main__':
                 take_pause = False
                 if clicker.is_paused:
                     take_pause = True
-
             if event.type == pygame.MOUSEBUTTONDOWN:
                 image2 = pygame.image.load("Skins\click_effect.png")
                 click = False
@@ -403,14 +401,15 @@ if __name__ == '__main__':
             else:
                 screen.blit(pause.render(), (0, 0))
         if right_menu_is_showing:
-            right_menu = RightMenu()
-
+            a = max(0, a - (v * clock.tick() / 1000))
+        if not right_menu_is_showing:
+            a = min(WINDOW_WIDTH // 2, a + (v * clock.tick() / 1000))
+        right_menu = RightMenu(a)
         if image:
             image = pygame.transform.scale(image, (WINDOW_WIDTH // 26, WINDOW_HEIGHT // 20))
             screen.blit(image, (x - WINDOW_WIDTH // 26 // 3, y - WINDOW_HEIGHT // 20 // 3))
         if image2:
             image2 = pygame.transform.scale(image2, (WINDOW_WIDTH // 26, WINDOW_HEIGHT // 20))
             screen.blit(image2, (x - WINDOW_WIDTH // 26 // 3, y - WINDOW_HEIGHT // 20 // 3))
-
         pygame.display.flip()
     pygame.quit()
