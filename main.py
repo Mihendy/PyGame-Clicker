@@ -131,7 +131,7 @@ class Clicker:
 class Button:
     """Класс кнопки"""
 
-    def __init__(self, form, position, text='', cursor_pos=(None, None), text_coords=(None, None),
+    def __init__(self, form, position, text='', text_coords=(None, None),
                  click_event=False):
         """Инициализация и отрисовка кнопки на форме"""
         # self, форма на которой рисуется кнопка, координаты верхней левой и правой нижней точек
@@ -140,10 +140,9 @@ class Button:
         self.title = text
         self.x, self.y, self.width, self.height = position
         self.click_event = click_event
-        self.cursor_pos = cursor_pos
         self.form = form
         self.font_color = (255, 255, 255)
-        self.font_size = 24
+        self.font_size = WINDOW_WIDTH // (WINDOW_WIDTH // 24)
         self.active_clr = (42, 82, 190, 100)
         self.alpha = 255
         self.border_color = 'black'
@@ -157,7 +156,7 @@ class Button:
                          (self.x, self.y,
                           self.width, self.height),
                          width=0,
-                         border_radius=15)
+                         border_radius=WINDOW_HEIGHT // (WINDOW_HEIGHT // 15))
         pygame.draw.rect(self.form,
                          self.border_color,
                          (self.x, self.y,
@@ -174,11 +173,12 @@ class Button:
 
     def install_event_filter(self):
         """EventFilter, в котором происходит обработка событий"""
-        if self.check_button_enter(self.cursor_pos, (self.x, self.y,
-                                                     self.x + self.width,
-                                                     self.y + self.height)):
-            self.coeff_x = 25
-            self.coeff_y = 10
+        global x, y
+        if check_button_enter((self.x, self.y,
+                               self.x + self.width,
+                               self.y + self.height)):
+            self.coeff_x = WINDOW_WIDTH // (WINDOW_WIDTH // 25)
+            self.coeff_y = WINDOW_WIDTH // (WINDOW_WIDTH // 10)
             self.x -= self.coeff_x
             self.y -= self.coeff_y
             self.width += self.coeff_x * 2
@@ -187,37 +187,9 @@ class Button:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 self.active_clr = (255, 255, 255, self.alpha)
                 self.font_color = (42, 82, 190, self.alpha)
-                if self.title == 'Продолжить игру':
-                    clicker.switch_pause()
-                elif self.title == 'Выйти':
-                    pygame.quit()
-                elif self.title == 'Настройки':
-                    print('Настройки в разработке..')
-                elif self.title == 'Магазин':
-                    global right_menu_is_showing
-                    # if not right_menu_is_showing and click_timer():
-                    #     right_menu_is_showing = True
-                    # elif click_timer():
-                    #     right_menu_is_showing = False
-                    right_menu_is_showing = not right_menu_is_showing
-                    print('change')
-            if event.type == pygame.MOUSEMOTION:
+            if event.type == pygame.MOUSEMOTION or event.type == pygame.MOUSEBUTTONUP:
                 self.font_color = (255, 255, 255)
                 self.active_clr = (42, 82, 190, self.alpha)
-            if event.type == pygame.MOUSEBUTTONUP:
-                self.font_color = (255, 255, 255)
-                self.active_clr = (42, 82, 190, self.alpha)
-
-    @staticmethod
-    def check_button_enter(click_pos, button_pos):
-        """Функция проверяет наличие над кнопкой курсора"""
-        if click_pos is None:
-            return False
-        x, y = click_pos
-        x1, y1, x2, y2 = button_pos
-        if x in range(int(x1), int(x2)) and y in range(int(y1), int(y2)):
-            return True
-        return False
 
 
 class Pause:
@@ -244,39 +216,78 @@ class Pause:
     def draw_buttons(self):
         """Функция рисует кнопки в меню паузы"""
         for i in range(3):
-            Button(screen, (WINDOW_WIDTH // 3.3,
-                            self.buttons_titles[i][1],
-                            self.pause_button_size[0],
-                            self.pause_button_size[1]),
-                   text=(self.buttons_titles[i][0]),
-                   text_coords=self.buttons_titles[i][-1],
-                   cursor_pos=(x, y))
+            btn = Button(screen, (WINDOW_WIDTH // 3.3,
+                                  self.buttons_titles[i][1],
+                                  self.pause_button_size[0],
+                                  self.pause_button_size[1]),
+                         text=(self.buttons_titles[i][0]),
+                         text_coords=self.buttons_titles[i][-1], )
+            if check_button_enter((btn.x, btn.y,
+                                   btn.x + btn.width,
+                                   btn.y + btn.height)):
+                if i == 0:  # Кнопка продолжения игры
+                    clicker.switch_pause()
+                elif i == 1:  # Кнопка Настроек игры
+                    print('Настройки в разработке')
+                elif i == 2:  # Кнопка выхода из игры
+                    global running
+                    running = False
 
-    def check_button_enter(self, click_pos, button_pos):
-        """Функция проверяет наличие курсора в поле кнопки"""
-        x, y = click_pos
-        x1, y1, x2, y2 = button_pos
-        if x in range(int(x1), int(x2)) and y in range(int(y1), int(y2)):
-            return True
-        return False
+
+# class Animation:
+#     """Класс анимации, которая устанавливается по заданным параметрам"""
+#
+#     # Анимация представлена именно в виде класса, чтобы удобно было менять расположения объекта и
+#     # его размер с течением времени.
+#     def __init__(self, obj=None, start_pos=None, finish_pos=None, speed=None,
+#                  obj_start_size=(None, None), obj_finish_size=None):
+#         self.start_pos = start_pos
+#         self.object = obj
+#         self.width, self.height = obj_start_size
+#         self.finish_size = obj_finish_size
+#         self.finish_pos = finish_pos
+#         self.speed = speed
 
 
 class RightMenu:
-    def __init__(self, a):
+    def __init__(self):
         self.width, self.height = WINDOW_WIDTH // 3, WINDOW_HEIGHT - 50
         self.color = (20, 20, 20)
-        self.pos = (WINDOW_WIDTH - WINDOW_WIDTH // 3, 25)
-        points = [(self.pos[0] + 100 + a, self.pos[1]), (self.pos[0] + a, self.pos[1] + self.height),
-                  (self.pos[0] + self.width + a, self.pos[1] + self.height),
-                  (self.pos[0] + self.width + a, self.pos[1])]
-        pygame.draw.polygon(screen, self.color, points, width=0)
-        skins_button = Button(screen, (self.pos[0] - 25 + a, self.pos[1] + 655, 210, 75),
-                              text='Скины', text_coords=(self.pos[0] + 50 + a, self.pos[1] + 655 + 20),
-                              cursor_pos=(x, y))
-        boosters_button = Button(screen, (self.pos[0] + 225 + a, self.pos[1] + 655, 210, 75),
+        self.pos = (WINDOW_WIDTH - WINDOW_WIDTH // 3, WINDOW_HEIGHT // (WINDOW_HEIGHT // 25))
+        self.button_pos = self.pos[:]
+        self.main_points = [(self.pos[0] + 100, self.pos[1]), (self.pos[0],
+                                                               self.pos[1] + self.height),
+                            (self.pos[0] + self.width, self.pos[1] + self.height),
+                            (self.pos[0] + self.width, self.pos[1])]
+
+    def show(self):
+        self.show_animation()
+        pygame.draw.polygon(screen, self.color, self.main_points, width=0)
+        skins_button = Button(screen, (self.button_pos[0] - 25, self.button_pos[1] + 655, 210, 75),
+                              text='Скины',
+                              text_coords=(self.button_pos[0] + 50, self.button_pos[1] + 655 + 20))
+        boosters_button = Button(screen,
+                                 (self.button_pos[0] + 225, self.button_pos[1] + 655, 210, 75),
                                  text='Ускорители',
-                                 text_coords=(self.pos[0] + 285 + a, self.pos[1] + 655 + 20),
-                                 cursor_pos=(x, y))
+                                 text_coords=(
+                                     self.button_pos[0] + 285, self.button_pos[1] + 655 + 20))
+        pygame.draw.rect(screen, 'white', (line_right_menu_start_pos[0] - 25,
+                                           line_right_menu_start_pos[1] - 10, 510, 40),
+                         width=0, border_radius=WINDOW_WIDTH // (WINDOW_WIDTH // 15))
+
+    def show_animation(self):
+        # global right_menu_animation
+        # if right_menu_animation.finish_pos[0] < right_menu_animation.start_pos[0]:
+        #     right_menu_animation.start_pos[0] -= right_menu_animation.speed * clock.tick() / 1000,
+        global right_menu_start_pos, right_menu_finish_pos, \
+            right_menu_show_speed, right_menu_btns_start_pos, right_menu_btns_show_speed, clock, \
+            line_right_menu_speed
+        if right_menu_finish_pos[0] < right_menu_start_pos[0]:
+            right_menu_start_pos[0] -= right_menu_show_speed * clock.tick() / 1000
+        if right_menu_finish_pos[0] < right_menu_btns_start_pos[0]:
+            right_menu_btns_start_pos[0] -= right_menu_btns_show_speed * clock.tick() / 1000
+        if self.pos[0] - 25 < line_right_menu_start_pos[0] - 25:
+            line_right_menu_start_pos[0] -= line_right_menu_speed * clock.tick() / 1000
 
 
 class Shop:
@@ -320,12 +331,18 @@ class Shop:
 
 
 def click_timer():
-    global clock
+    """ Таймер, предотворяющий залипание клавиш"""
     result = True if clock.tick() / 1000 > 0.1 else False
-    if not result:
-        return result
-    clock = pygame.time.Clock()
+    result = True
     return result
+
+
+def check_button_enter(button_pos):
+    """Функция проверяет наличие над кнопкой курсора"""
+    x1, y1, x2, y2 = button_pos
+    if x in range(int(x1), int(x2)) and y in range(int(y1), int(y2)):
+        return True
+    return False
 
 
 if __name__ == '__main__':
@@ -345,15 +362,32 @@ if __name__ == '__main__':
     running = True
     right_menu_is_showing = False
     image2 = False
+
+    right_menu_show_speed = 500
+    right_menu_btns_show_speed = right_menu_show_speed // (right_menu_show_speed // 25)
+    right_menu_finish_pos = [WINDOW_WIDTH - WINDOW_WIDTH // 3,
+                             WINDOW_WIDTH // (WINDOW_WIDTH // 25)]
+    right_menu_start_pos = [WINDOW_WIDTH - WINDOW_WIDTH // 3 +
+                            (WINDOW_WIDTH // (WINDOW_WIDTH // 300)),
+                            WINDOW_WIDTH // (WINDOW_WIDTH // 25)]
+    right_menu_btns_start_pos = right_menu_start_pos
+    line_right_menu_speed = 2500
+    line_right_menu_start_pos = [WINDOW_WIDTH - WINDOW_WIDTH // 3 +
+                                 (WINDOW_WIDTH // (WINDOW_WIDTH // 300)),
+                                 WINDOW_WIDTH // (WINDOW_WIDTH // 25)]
+    line_menu_finish_pos = (line_right_menu_start_pos[0] - 500, line_right_menu_start_pos[1])
+
     take_pause = False
-    click = False
     x, y = None, None
     # image = pygame.image.load("Skins\cursor_green.png")
     image = pygame.image.load('Skins\cursor_blue.png')
-    v = WINDOW_WIDTH  # пикселей в секунду
-    a = WINDOW_WIDTH // 2
+    # v = WINDOW_WIDTH  # пикселей в секунду
+    # a = WINDOW_WIDTH // 2
     clock = pygame.time.Clock()
+
     while running:
+        click = False
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 clicker.is_paused = False
@@ -366,9 +400,7 @@ if __name__ == '__main__':
                     take_pause = True
             if event.type == pygame.MOUSEBUTTONDOWN:
                 image2 = pygame.image.load("Skins\click_effect.png")
-                click = False
-                if clicker.is_paused:
-                    click = True
+                click = True
             if event.type == pygame.MOUSEBUTTONUP:
                 # image = pygame.image.load("Skins\cursor_green.png")
                 image = pygame.image.load("Skins\cursor_blue.png")
@@ -392,8 +424,38 @@ if __name__ == '__main__':
 
         screen.fill((50, 50, 50))
         clicker.render(screen)
-        shop_button = Button(screen, (50, 665, 200, 75), text='Магазин', cursor_pos=(x, y),
-                             text_coords=(105, 665 + 20))
+        if not clicker.is_paused:
+            shop_button = Button(screen, (50, 665, 200, 75), text='Магазин',
+                                 text_coords=(105, 665 + 20))
+            if check_button_enter((shop_button.x, shop_button.y,
+                                   shop_button.x + shop_button.width,
+                                   shop_button.y + shop_button.height)) and click:
+                if right_menu_is_showing and click_timer():
+                    right_menu_is_showing = False
+                elif click_timer():
+                    right_menu_is_showing = True
+                    line_right_menu_start_pos = [WINDOW_WIDTH - WINDOW_WIDTH // 3 +
+                                                 (WINDOW_WIDTH // (WINDOW_WIDTH // 300)),
+                                                 WINDOW_WIDTH // (WINDOW_WIDTH // 25)]
+
+                    # right_menu_animation = Animation(
+                    #     start_pos=[WINDOW_WIDTH - WINDOW_WIDTH // 3 +
+                    #                (WINDOW_WIDTH // (
+                    #                        WINDOW_WIDTH // 300)),
+                    #                WINDOW_WIDTH // (
+                    #                        WINDOW_WIDTH // 25)],
+                    #     finish_pos=[WINDOW_WIDTH - WINDOW_WIDTH // 3,
+                    #                 WINDOW_WIDTH // (
+                    #                         WINDOW_WIDTH // 25)],
+                    #     speed=500)
+                    # # right_menu_pos = (WINDOW_WIDTH - WINDOW_WIDTH // 3, WINDOW_HEIGHT // (WINDOW_HEIGHT // 25))
+                    # right_menu_skin_btn_animation = Animation(
+                    #     finish_pos=(WINDOW_WIDTH - WINDOW_WIDTH // 3 - 25,
+                    #                 WINDOW_HEIGHT // (WINDOW_HEIGHT // 25) + 655),
+                    #     start_pos=(WINDOW_WIDTH - WINDOW_WIDTH // 3 - 25 + 500,
+                    #                WINDOW_HEIGHT // (WINDOW_HEIGHT // 25) + 655),
+                    #     speed=1200)
+
         # shop.render(screen)
         if clicker.is_paused:
             if take_pause:
@@ -401,10 +463,9 @@ if __name__ == '__main__':
             else:
                 screen.blit(pause.render(), (0, 0))
         if right_menu_is_showing:
-            a = max(0, a - (v * clock.tick() / 1000))
-        if not right_menu_is_showing:
-            a = min(WINDOW_WIDTH // 2, a + (v * clock.tick() / 1000))
-        right_menu = RightMenu(a)
+            right_menu = RightMenu()
+            right_menu.show()
+
         if image:
             image = pygame.transform.scale(image, (WINDOW_WIDTH // 26, WINDOW_HEIGHT // 20))
             screen.blit(image, (x - WINDOW_WIDTH // 26 // 3, y - WINDOW_HEIGHT // 20 // 3))
