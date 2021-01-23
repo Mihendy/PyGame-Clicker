@@ -171,26 +171,6 @@ class Button:
         # self.active_clr = (255, 255, 255, self.alpha)
         # self.font_color = (42, 82, 190, self.alpha) ----Убрать!!
 
-    def install_event_filter(self):
-        """EventFilter, в котором происходит обработка событий"""
-        global x, y
-        if check_button_enter((self.x, self.y,
-                               self.x + self.width,
-                               self.y + self.height)):
-            self.coeff_x = WINDOW_WIDTH // (WINDOW_WIDTH // 25)
-            self.coeff_y = WINDOW_WIDTH // (WINDOW_WIDTH // 10)
-            self.x -= self.coeff_x
-            self.y -= self.coeff_y
-            self.width += self.coeff_x * 2
-            self.height += self.coeff_y * 2
-            self.font_size = self.font_size + self.coeff_x // 5
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                self.active_clr = (255, 255, 255, self.alpha)
-                self.font_color = (42, 82, 190, self.alpha)
-            if event.type == pygame.MOUSEMOTION or event.type == pygame.MOUSEBUTTONUP:
-                self.font_color = (255, 255, 255)
-                self.active_clr = (42, 82, 190, self.alpha)
-
 
 class Pause:
     def __init__(self):
@@ -328,6 +308,15 @@ class Shop:
     def render(self, screen):
         self.ico_copy = pygame.transform.scale(self.ico, (self.ico_w // 5, self.ico_h // 5))
         screen.blit(self.ico_copy, (int(WINDOW_WIDTH / 8 * 5), WINDOW_HEIGHT // 20))
+
+
+class ItemCell:
+    def __init__(self, price, name, is_bought):
+        self.price, self.name, self.is_bought = price, name, is_bought
+
+    def render(self):
+        """Рисует ячейку товера"""
+        pass
 
 
 def click_timer():
