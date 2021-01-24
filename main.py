@@ -168,8 +168,6 @@ class Button:
         self.text = self.font.render(text, True, self.font_color)
         screen.blit(self.text, (self.x + ((self.width - self.text.get_width()) // 2),
                                 self.y + ((self.height - self.text.get_height()) // 2)))
-        # self.active_clr = (255, 255, 255, self.alpha)
-        # self.font_color = (42, 82, 190, self.alpha) ----Убрать!!
 
     def install_event_filter(self):
         """EventFilter, в котором происходит обработка событий"""
@@ -198,9 +196,9 @@ class Pause:
         self.font_size = WINDOW_WIDTH // (WINDOW_WIDTH // 24)
         self.pause_button_size = WINDOW_WIDTH // 3, WINDOW_HEIGHT // 13.32
         self.buttons_titles = {
-            0: ('Продолжить игру', WINDOW_HEIGHT * 0.325, (550, 260)),
-            1: ('Настройки', WINDOW_HEIGHT * 0.455, (590, 360)),
-            2: ('Выйти', WINDOW_HEIGHT * 0.585, (610, 460))
+            0: ('Продолжить игру', 250, (550, 260)),
+            1: ('Настройки', 350, (590, 360)),
+            2: ('Выйти', 450, (610, 460))
         }
 
     def render(self):
@@ -230,6 +228,21 @@ class Pause:
                 elif i == 2:  # Кнопка выхода из игры
                     global running
                     running = False
+
+
+# class Animation:
+#     """Класс анимации, которая устанавливается по заданным параметрам"""
+#
+#     # Анимация представлена именно в виде класса, чтобы удобно было менять расположения объекта и
+#     # его размер с течением времени.
+#     def __init__(self, obj=None, start_pos=None, finish_pos=None, speed=None,
+#                  obj_start_size=(None, None), obj_finish_size=None):
+#         self.start_pos = start_pos
+#         self.object = obj
+#         self.width, self.height = obj_start_size
+#         self.finish_size = obj_finish_size
+#         self.finish_pos = finish_pos
+#         self.speed = speed
 
 
 class RightMenu:
@@ -365,8 +378,9 @@ if __name__ == '__main__':
                             WINDOW_WIDTH // (WINDOW_WIDTH // 25)]
     right_menu_btns_start_pos = right_menu_start_pos
     line_right_menu_speed = 13000
-
-    line_menu_finish_pos = (0, 0)
+    line_right_menu_start_pos = [WINDOW_WIDTH - WINDOW_WIDTH // 15 +
+                                 (WINDOW_WIDTH // (WINDOW_WIDTH // 300)), 0]
+    line_menu_finish_pos = (0, line_right_menu_start_pos[1])
 
     take_pause = False
     x, y = 0, 0
@@ -453,14 +467,33 @@ if __name__ == '__main__':
                                                      (WINDOW_WIDTH // (WINDOW_WIDTH // 300)),
                                                      WINDOW_WIDTH // (WINDOW_WIDTH // 25)]
 
-        if clicker.is_paused:
-            if take_pause:
-                screen.blit(pause.render(), (0, 0))
-            else:
-                screen.blit(pause.render(), (0, 0))
-        if right_menu_is_showing:
-            right_menu = RightMenu()
-            right_menu.show()
+                        # right_menu_animation = Animation(
+                        #     start_pos=[WINDOW_WIDTH - WINDOW_WIDTH // 3 +
+                        #                (WINDOW_WIDTH // (
+                        #                        WINDOW_WIDTH // 300)),
+                        #                WINDOW_WIDTH // (
+                        #                        WINDOW_WIDTH // 25)],
+                        #     finish_pos=[WINDOW_WIDTH - WINDOW_WIDTH // 3,
+                        #                 WINDOW_WIDTH // (
+                        #                         WINDOW_WIDTH // 25)],
+                        #     speed=500)
+                        # # right_menu_pos = (WINDOW_WIDTH - WINDOW_WIDTH // 3, WINDOW_HEIGHT // (WINDOW_HEIGHT // 25))
+                        # right_menu_skin_btn_animation = Animation(
+                        #     finish_pos=(WINDOW_WIDTH - WINDOW_WIDTH // 3 - 25,
+                        #                 WINDOW_HEIGHT // (WINDOW_HEIGHT // 25) + 655),
+                        #     start_pos=(WINDOW_WIDTH - WINDOW_WIDTH // 3 - 25 + 500,
+                        #                WINDOW_HEIGHT // (WINDOW_HEIGHT // 25) + 655),
+                        #     speed=1200)
+
+            # shop.render(screen)
+            if clicker.is_paused:
+                if take_pause:
+                    screen.blit(pause.render(), (0, 0))
+                else:
+                    screen.blit(pause.render(), (0, 0))
+            if right_menu_is_showing:
+                right_menu = RightMenu()
+                right_menu.show()
 
             if image:
                 image = pygame.transform.scale(image, (WINDOW_WIDTH // 26, WINDOW_HEIGHT // 20))
@@ -469,4 +502,6 @@ if __name__ == '__main__':
                 image2 = pygame.transform.scale(image2, (WINDOW_WIDTH // 26, WINDOW_HEIGHT // 20))
                 screen.blit(image2, (x - WINDOW_WIDTH // 26 // 3, y - WINDOW_HEIGHT // 20 // 3))
             pygame.display.flip()
+    clicker.is_paused = False
+    dbSaver.upload('data/save_data_1.db', clicker.to_save_info())
     pygame.quit()
