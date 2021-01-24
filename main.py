@@ -261,13 +261,15 @@ class RightMenu:
     def show(self):
         self.show_animation()
         pygame.draw.polygon(screen, self.color, self.main_points, width=0)
-        skins_button = Button(screen, (1250, 950, 210, 75), 'Скины')
-        boosters_button = Button(screen, (1500, 950, 210, 75), 'Ускорители')
+        skins_button = Button(screen, (WINDOW_WIDTH / 1.55, WINDOW_HEIGHT / 1.14,
+                                       int(WINDOW_WIDTH / 9), int(WINDOW_HEIGHT / 14)), 'Скины')
+        boosters_button = Button(screen, (WINDOW_WIDTH / 1.25, WINDOW_HEIGHT / 1.14,
+                                          int(WINDOW_WIDTH / 9), int(WINDOW_HEIGHT / 14)), 'Ускорители')
         pygame.draw.rect(screen, 'white', (line_right_menu_start_pos[0],
                                            line_right_menu_start_pos[1],
                                            WINDOW_WIDTH * 1.5, WINDOW_HEIGHT * 0.032))
 
-    def show_animation(self):180
+    def show_animation(self):
         global right_menu_start_pos, right_menu_finish_pos, \
             right_menu_show_speed, right_menu_btns_start_pos, right_menu_btns_show_speed, clock, \
             line_right_menu_speed
@@ -328,10 +330,6 @@ class ItemCell:
         x, y = pos
         font = pygame.font.Font("Fonts/beer money.ttf", 18)
         text = font.render(str(self.price), True, (50, 150, 50) if self.price <= MONEY else (150, 50, 50))
-        # text_x = x + width // 2
-        # text_y = y + height // 2
-        # text_w = text.get_width()
-        # text_h = text.get_height()
         ico = pygame.transform.scale(self.ico, (width, width))
         screen.blit(ico, (x, y))
         if not self.is_bought:
@@ -459,7 +457,7 @@ if __name__ == '__main__':
             screen.fill((50, 50, 50))
             clicker.render(screen)
             if not clicker.is_paused:
-                shop_button = Button(screen, (50, 665, 200, 75), 'Магазин')
+                shop_button = Button(screen, (WINDOW_WIDTH / 38, WINDOW_HEIGHT / 1.14, int(WINDOW_WIDTH / 9), int(WINDOW_HEIGHT / 14)), 'Магазин')
                 if check_button_enter((shop_button.x, shop_button.y,
                                        shop_button.x + shop_button.width,
                                        shop_button.y + shop_button.height)) and click:
