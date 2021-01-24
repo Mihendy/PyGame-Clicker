@@ -132,8 +132,7 @@ class Clicker:
 class Button:
     """Класс кнопки"""
 
-    def __init__(self, form, position, text='', text_coords=(None, None),
-                 click_event=False):
+    def __init__(self, form, position, text='', click_event=False):
         """Инициализация и отрисовка кнопки на форме"""
         # self, форма на которой рисуется кнопка, координаты верхней левой и правой нижней точек
         # кнопки, позиция курсора в данный момент, текст кнопки и его координаты,
@@ -167,8 +166,8 @@ class Button:
 
         self.font = pygame.font.Font("Fonts/beer money.ttf", self.font_size)
         self.text = self.font.render(text, True, self.font_color)
-        screen.blit(self.text, (text_coords[0] - self.coeff_x // 5 * len(text[0]) // 2,
-                                text_coords[1] - self.coeff_y // 5 * 2))
+        screen.blit(self.text, (self.x + ((self.width - self.text.get_width()) // 2),
+                                self.y + ((self.height - self.text.get_height()) // 2)))
         # self.active_clr = (255, 255, 255, self.alpha)
         # self.font_color = (42, 82, 190, self.alpha) ----Убрать!!
 
@@ -220,9 +219,7 @@ class Pause:
             btn = Button(screen, (WINDOW_WIDTH // 3.3,
                                   self.buttons_titles[i][1],
                                   self.pause_button_size[0],
-                                  self.pause_button_size[1]),
-                         text=(self.buttons_titles[i][0]),
-                         text_coords=self.buttons_titles[i][-1], )
+                                  self.pause_button_size[1]), self.buttons_titles[i][0])
             if check_button_enter((btn.x, btn.y,
                                    btn.x + btn.width,
                                    btn.y + btn.height)) and event.type == pygame.MOUSEBUTTONDOWN:
@@ -264,28 +261,13 @@ class RightMenu:
     def show(self):
         self.show_animation()
         pygame.draw.polygon(screen, self.color, self.main_points, width=0)
-        skins_button = Button(screen, (self.button_pos[0] - WINDOW_WIDTH // (WINDOW_WIDTH // 25),
-                                       WINDOW_HEIGHT * 0.8855,
-                                       WINDOW_WIDTH // (WINDOW_WIDTH // 210),
-                                       WINDOW_HEIGHT // (WINDOW_HEIGHT // 75)),
-                              text='Скины',
-                              text_coords=(self.button_pos[0] +
-                                           WINDOW_WIDTH // (WINDOW_WIDTH // 50),
-                                           self.button_pos[1] + WINDOW_HEIGHT * 0.88))
-        boosters_button = Button(screen,
-                                 (self.button_pos[0] + WINDOW_WIDTH // (WINDOW_WIDTH // 225),
-                                  self.button_pos[1] + WINDOW_HEIGHT * 0.8529,
-                                  WINDOW_WIDTH // (WINDOW_WIDTH // 210),
-                                  WINDOW_HEIGHT // (WINDOW_HEIGHT // 75)),
-                                 text='Ускорители',
-                                 text_coords=(
-                                     self.button_pos[0] + WINDOW_WIDTH * 0.212,
-                                     self.button_pos[1] + WINDOW_HEIGHT * 0.88))
+        skins_button = Button(screen, (1250, 950, 210, 75), 'Скины')
+        boosters_button = Button(screen, (1500, 950, 210, 75), 'Ускорители')
         pygame.draw.rect(screen, 'white', (line_right_menu_start_pos[0],
                                            line_right_menu_start_pos[1],
                                            WINDOW_WIDTH * 1.5, WINDOW_HEIGHT * 0.032))
 
-    def show_animation(self):
+    def show_animation(self):180
         global right_menu_start_pos, right_menu_finish_pos, \
             right_menu_show_speed, right_menu_btns_start_pos, right_menu_btns_show_speed, clock, \
             line_right_menu_speed
@@ -420,24 +402,25 @@ if __name__ == '__main__':
     c = 0
     while running:
         if intro:
-            screen.fill((0, 0, 0))
-
-            intro_image.set_alpha(a)
-            if flag:
-                a += v * clock.tick() / 1000
-            else:
-                a -= v * clock.tick() / 1000
-            screen.blit(intro_image, ((WINDOW_WIDTH - min(WINDOW_WIDTH, WINDOW_HEIGHT)) // 2,
-                                      (WINDOW_HEIGHT - min(WINDOW_WIDTH, WINDOW_HEIGHT)) // 2))
-            pygame.display.flip()
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    exit()
-            if a > 160 or a < 0:
-                flag = not flag
-                c += 1
-            if c >= 2:
-                intro = not intro
+            # screen.fill((0, 0, 0))
+            #
+            # intro_image.set_alpha(a)
+            # if flag:
+            #     a += v * clock.tick() / 1000
+            # else:
+            #     a -= v * clock.tick() / 1000
+            # screen.blit(intro_image, ((WINDOW_WIDTH - min(WINDOW_WIDTH, WINDOW_HEIGHT)) // 2,
+            #                           (WINDOW_HEIGHT - min(WINDOW_WIDTH, WINDOW_HEIGHT)) // 2))
+            # pygame.display.flip()
+            # for event in pygame.event.get():
+            #     if event.type == pygame.QUIT:
+            #         exit()
+            # if a > 160 or a < 0:
+            #     flag = not flag
+            #     c += 1
+            # if c >= 2:
+            #     intro = not intro
+            intro = not intro
         else:
             MONEY = clicker.money
             click = False
@@ -473,34 +456,48 @@ if __name__ == '__main__':
                             clicker.switch_pause()
                             pygame.display.set_caption('Clicker (paused)')
 
-        screen.fill((50, 50, 50))
-        clicker.render(screen)
-        if not clicker.is_paused:
-            shop_button = Button(screen, (WINDOW_WIDTH // (WINDOW_WIDTH // 50),
-                                          WINDOW_HEIGHT * 0.865,
-                                          WINDOW_WIDTH // (WINDOW_WIDTH // 200),
-                                          WINDOW_HEIGHT * 0.09765),
-                                 text='Магазин',
-                                 text_coords=(WINDOW_WIDTH // (WINDOW_WIDTH // 120),
-                                              WINDOW_HEIGHT * 0.8919))
-            if check_button_enter((shop_button.x, shop_button.y,
-                                   shop_button.x + shop_button.width,
-                                   shop_button.y + shop_button.height)) and click:
-                if right_menu_is_showing and click_timer():
-                    right_menu_is_showing = False
-                elif click_timer():
-                    right_menu_is_showing = True
-                    line_right_menu_start_pos = [WINDOW_WIDTH - WINDOW_WIDTH // 15 +
-                                                 (WINDOW_WIDTH // (WINDOW_WIDTH // 300)), 0]
+            screen.fill((50, 50, 50))
+            clicker.render(screen)
+            if not clicker.is_paused:
+                shop_button = Button(screen, (50, 665, 200, 75), 'Магазин')
+                if check_button_enter((shop_button.x, shop_button.y,
+                                       shop_button.x + shop_button.width,
+                                       shop_button.y + shop_button.height)) and click:
+                    if right_menu_is_showing and click_timer():
+                        right_menu_is_showing = False
+                    elif click_timer():
+                        right_menu_is_showing = True
+                        line_right_menu_start_pos = [WINDOW_WIDTH - WINDOW_WIDTH // 3 +
+                                                     (WINDOW_WIDTH // (WINDOW_WIDTH // 300)),
+                                                     WINDOW_WIDTH // (WINDOW_WIDTH // 25)]
 
-        if clicker.is_paused:
-            if take_pause:
-                screen.blit(pause.render(), (0, 0))
-            else:
-                screen.blit(pause.render(), (0, 0))
-        if right_menu_is_showing:
-            right_menu = RightMenu()
-            right_menu.show()
+                        # right_menu_animation = Animation(
+                        #     start_pos=[WINDOW_WIDTH - WINDOW_WIDTH // 3 +
+                        #                (WINDOW_WIDTH // (
+                        #                        WINDOW_WIDTH // 300)),
+                        #                WINDOW_WIDTH // (
+                        #                        WINDOW_WIDTH // 25)],
+                        #     finish_pos=[WINDOW_WIDTH - WINDOW_WIDTH // 3,
+                        #                 WINDOW_WIDTH // (
+                        #                         WINDOW_WIDTH // 25)],
+                        #     speed=500)
+                        # # right_menu_pos = (WINDOW_WIDTH - WINDOW_WIDTH // 3, WINDOW_HEIGHT // (WINDOW_HEIGHT // 25))
+                        # right_menu_skin_btn_animation = Animation(
+                        #     finish_pos=(WINDOW_WIDTH - WINDOW_WIDTH // 3 - 25,
+                        #                 WINDOW_HEIGHT // (WINDOW_HEIGHT // 25) + 655),
+                        #     start_pos=(WINDOW_WIDTH - WINDOW_WIDTH // 3 - 25 + 500,
+                        #                WINDOW_HEIGHT // (WINDOW_HEIGHT // 25) + 655),
+                        #     speed=1200)
+
+            # shop.render(screen)
+            if clicker.is_paused:
+                if take_pause:
+                    screen.blit(pause.render(), (0, 0))
+                else:
+                    screen.blit(pause.render(), (0, 0))
+            if right_menu_is_showing:
+                right_menu = RightMenu()
+                right_menu.show()
 
             if image:
                 image = pygame.transform.scale(image, (WINDOW_WIDTH // 26, WINDOW_HEIGHT // 20))
@@ -509,6 +506,4 @@ if __name__ == '__main__':
                 image2 = pygame.transform.scale(image2, (WINDOW_WIDTH // 26, WINDOW_HEIGHT // 20))
                 screen.blit(image2, (x - WINDOW_WIDTH // 26 // 3, y - WINDOW_HEIGHT // 20 // 3))
             pygame.display.flip()
-    clicker.is_paused = False
-    dbSaver.upload('data/save_data_1.db', clicker.to_save_info())
     pygame.quit()
