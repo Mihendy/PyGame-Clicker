@@ -504,4 +504,6 @@ if __name__ == '__main__':
                 image2 = pygame.transform.scale(image2, (WINDOW_WIDTH // 26, WINDOW_HEIGHT // 20))
                 screen.blit(image2, (x - WINDOW_WIDTH // 26 // 3, y - WINDOW_HEIGHT // 20 // 3))
             pygame.display.flip()
+    clicker.is_paused = False
+    dbSaver.upload('data/save_data_1.db', clicker.to_save_info())
     pygame.quit()
