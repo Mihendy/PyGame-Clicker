@@ -264,22 +264,28 @@ class RightMenu:
     def show(self):
         self.show_animation()
         pygame.draw.polygon(screen, self.color, self.main_points, width=0)
-        skins_button = Button(screen, (self.button_pos[0] - 25, self.button_pos[1] + 655, 210, 75),
+        skins_button = Button(screen, (self.button_pos[0] - WINDOW_WIDTH // (WINDOW_WIDTH // 25),
+                                       WINDOW_HEIGHT * 0.8855,
+                                       WINDOW_WIDTH // (WINDOW_WIDTH // 210),
+                                       WINDOW_HEIGHT // (WINDOW_HEIGHT // 75)),
                               text='Скины',
-                              text_coords=(self.button_pos[0] + 50, self.button_pos[1] + 655 + 20))
+                              text_coords=(self.button_pos[0] +
+                                           WINDOW_WIDTH // (WINDOW_WIDTH // 50),
+                                           self.button_pos[1] + WINDOW_HEIGHT * 0.88))
         boosters_button = Button(screen,
-                                 (self.button_pos[0] + 225, self.button_pos[1] + 655, 210, 75),
+                                 (self.button_pos[0] + WINDOW_WIDTH // (WINDOW_WIDTH // 225),
+                                  self.button_pos[1] + WINDOW_HEIGHT * 0.8529,
+                                  WINDOW_WIDTH // (WINDOW_WIDTH // 210),
+                                  WINDOW_HEIGHT // (WINDOW_HEIGHT // 75)),
                                  text='Ускорители',
                                  text_coords=(
-                                     self.button_pos[0] + 285, self.button_pos[1] + 655 + 20))
-        pygame.draw.rect(screen, 'white', (line_right_menu_start_pos[0] - 25,
-                                           line_right_menu_start_pos[1] - 10, 510, 40),
-                         width=0, border_radius=WINDOW_WIDTH // (WINDOW_WIDTH // 15))
+                                     self.button_pos[0] + WINDOW_WIDTH * 0.212,
+                                     self.button_pos[1] + WINDOW_HEIGHT * 0.88))
+        pygame.draw.rect(screen, 'white', (line_right_menu_start_pos[0],
+                                           line_right_menu_start_pos[1],
+                                           WINDOW_WIDTH * 1.5, WINDOW_HEIGHT * 0.032))
 
     def show_animation(self):
-        # global right_menu_animation
-        # if right_menu_animation.finish_pos[0] < right_menu_animation.start_pos[0]:
-        #     right_menu_animation.start_pos[0] -= right_menu_animation.speed * clock.tick() / 1000,
         global right_menu_start_pos, right_menu_finish_pos, \
             right_menu_show_speed, right_menu_btns_start_pos, right_menu_btns_show_speed, clock, \
             line_right_menu_speed
@@ -287,20 +293,16 @@ class RightMenu:
             right_menu_start_pos[0] -= right_menu_show_speed * clock.tick() / 1000
         if right_menu_finish_pos[0] < right_menu_btns_start_pos[0]:
             right_menu_btns_start_pos[0] -= right_menu_btns_show_speed * clock.tick() / 1000
-        if self.pos[0] - 25 < line_right_menu_start_pos[0] - 25:
+        if line_menu_finish_pos[0] < line_right_menu_start_pos[0]:
             line_right_menu_start_pos[0] -= line_right_menu_speed * clock.tick() / 1000
 
 
 class Shop:
     def __init__(self):
-        self.width, self.height = WINDOW_WIDTH // 3, WINDOW_HEIGHT - WINDOW_HEIGHT // 22
-        self.color = (20, 20, 20)
-        self.pos = (WINDOW_WIDTH - WINDOW_WIDTH // 3, WINDOW_HEIGHT // (WINDOW_HEIGHT // 25))
-        self.button_pos = self.pos[:]
-        self.main_points = [(self.pos[0] + 100, self.pos[1]), (self.pos[0],
-                                                               self.pos[1] + self.height),
-                            (self.pos[0] + self.width, self.pos[1] + self.height),
-                            (self.pos[0] + self.width, self.pos[1])]
+        self.side = min(WINDOW_WIDTH, WINDOW_HEIGHT) // 10
+        self.ico = pygame.image.load('data/market.png')
+        self.ico_size = self.ico_w, self.ico_h = self.ico.get_size()
+        self.ico_copy = self.ico
         self.skins = {"blue_neon.png": 3500,
                       'earth.png': 5000,
                       'kolobok.png': 3000,
@@ -397,11 +399,10 @@ if __name__ == '__main__':
                             (WINDOW_WIDTH // (WINDOW_WIDTH // 300)),
                             WINDOW_WIDTH // (WINDOW_WIDTH // 25)]
     right_menu_btns_start_pos = right_menu_start_pos
-    line_right_menu_speed = 2500
-    line_right_menu_start_pos = [WINDOW_WIDTH - WINDOW_WIDTH // 3 +
-                                 (WINDOW_WIDTH // (WINDOW_WIDTH // 300)),
-                                 WINDOW_WIDTH // (WINDOW_WIDTH // 25)]
-    line_menu_finish_pos = (line_right_menu_start_pos[0] - 500, line_right_menu_start_pos[1])
+    line_right_menu_speed = 13000
+    line_right_menu_start_pos = [WINDOW_WIDTH - WINDOW_WIDTH // 15 +
+                                 (WINDOW_WIDTH // (WINDOW_WIDTH // 300)), 0]
+    line_menu_finish_pos = (0, line_right_menu_start_pos[1])
 
     take_pause = False
     x, y = 0, 0
@@ -472,48 +473,34 @@ if __name__ == '__main__':
                             clicker.switch_pause()
                             pygame.display.set_caption('Clicker (paused)')
 
-            screen.fill((50, 50, 50))
-            clicker.render(screen)
-            if not clicker.is_paused:
-                shop_button = Button(screen, (50, 665, 200, 75), text='Магазин',
-                                     text_coords=(105, 665 + 20))
-                if check_button_enter((shop_button.x, shop_button.y,
-                                       shop_button.x + shop_button.width,
-                                       shop_button.y + shop_button.height)) and click:
-                    if right_menu_is_showing and click_timer():
-                        right_menu_is_showing = False
-                    elif click_timer():
-                        right_menu_is_showing = True
-                        line_right_menu_start_pos = [WINDOW_WIDTH - WINDOW_WIDTH // 3 +
-                                                     (WINDOW_WIDTH // (WINDOW_WIDTH // 300)),
-                                                     WINDOW_WIDTH // (WINDOW_WIDTH // 25)]
+        screen.fill((50, 50, 50))
+        clicker.render(screen)
+        if not clicker.is_paused:
+            shop_button = Button(screen, (WINDOW_WIDTH // (WINDOW_WIDTH // 50),
+                                          WINDOW_HEIGHT * 0.865,
+                                          WINDOW_WIDTH // (WINDOW_WIDTH // 200),
+                                          WINDOW_HEIGHT * 0.09765),
+                                 text='Магазин',
+                                 text_coords=(WINDOW_WIDTH // (WINDOW_WIDTH // 120),
+                                              WINDOW_HEIGHT * 0.8919))
+            if check_button_enter((shop_button.x, shop_button.y,
+                                   shop_button.x + shop_button.width,
+                                   shop_button.y + shop_button.height)) and click:
+                if right_menu_is_showing and click_timer():
+                    right_menu_is_showing = False
+                elif click_timer():
+                    right_menu_is_showing = True
+                    line_right_menu_start_pos = [WINDOW_WIDTH - WINDOW_WIDTH // 15 +
+                                                 (WINDOW_WIDTH // (WINDOW_WIDTH // 300)), 0]
 
-                        # right_menu_animation = Animation(
-                        #     start_pos=[WINDOW_WIDTH - WINDOW_WIDTH // 3 +
-                        #                (WINDOW_WIDTH // (
-                        #                        WINDOW_WIDTH // 300)),
-                        #                WINDOW_WIDTH // (
-                        #                        WINDOW_WIDTH // 25)],
-                        #     finish_pos=[WINDOW_WIDTH - WINDOW_WIDTH // 3,
-                        #                 WINDOW_WIDTH // (
-                        #                         WINDOW_WIDTH // 25)],
-                        #     speed=500)
-                        # # right_menu_pos = (WINDOW_WIDTH - WINDOW_WIDTH // 3, WINDOW_HEIGHT // (WINDOW_HEIGHT // 25))
-                        # right_menu_skin_btn_animation = Animation(
-                        #     finish_pos=(WINDOW_WIDTH - WINDOW_WIDTH // 3 - 25,
-                        #                 WINDOW_HEIGHT // (WINDOW_HEIGHT // 25) + 655),
-                        #     start_pos=(WINDOW_WIDTH - WINDOW_WIDTH // 3 - 25 + 500,
-                        #                WINDOW_HEIGHT // (WINDOW_HEIGHT // 25) + 655),
-                        #     speed=1200)
-
-            if clicker.is_paused:
-                if take_pause:
-                    screen.blit(pause.render(), (0, 0))
-                else:
-                    screen.blit(pause.render(), (0, 0))
-            if right_menu_is_showing:
-                right_menu = RightMenu()
-                right_menu.show()
+        if clicker.is_paused:
+            if take_pause:
+                screen.blit(pause.render(), (0, 0))
+            else:
+                screen.blit(pause.render(), (0, 0))
+        if right_menu_is_showing:
+            right_menu = RightMenu()
+            right_menu.show()
 
             if image:
                 image = pygame.transform.scale(image, (WINDOW_WIDTH // 26, WINDOW_HEIGHT // 20))
