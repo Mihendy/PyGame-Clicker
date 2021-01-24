@@ -198,9 +198,9 @@ class Pause:
         self.font_size = WINDOW_WIDTH // (WINDOW_WIDTH // 24)
         self.pause_button_size = WINDOW_WIDTH // 3, WINDOW_HEIGHT // 13.32
         self.buttons_titles = {
-            0: ('Продолжить игру', 250, (550, 260)),
-            1: ('Настройки', 350, (590, 360)),
-            2: ('Выйти', 450, (610, 460))
+            0: ('Продолжить игру', WINDOW_HEIGHT * 0.325, (550, 260)),
+            1: ('Настройки', WINDOW_HEIGHT * 0.455, (590, 360)),
+            2: ('Выйти', WINDOW_HEIGHT * 0.585, (610, 460))
         }
 
     def render(self):
@@ -230,21 +230,6 @@ class Pause:
                 elif i == 2:  # Кнопка выхода из игры
                     global running
                     running = False
-
-
-# class Animation:
-#     """Класс анимации, которая устанавливается по заданным параметрам"""
-#
-#     # Анимация представлена именно в виде класса, чтобы удобно было менять расположения объекта и
-#     # его размер с течением времени.
-#     def __init__(self, obj=None, start_pos=None, finish_pos=None, speed=None,
-#                  obj_start_size=(None, None), obj_finish_size=None):
-#         self.start_pos = start_pos
-#         self.object = obj
-#         self.width, self.height = obj_start_size
-#         self.finish_size = obj_finish_size
-#         self.finish_pos = finish_pos
-#         self.speed = speed
 
 
 class RightMenu:
@@ -380,9 +365,8 @@ if __name__ == '__main__':
                             WINDOW_WIDTH // (WINDOW_WIDTH // 25)]
     right_menu_btns_start_pos = right_menu_start_pos
     line_right_menu_speed = 13000
-    line_right_menu_start_pos = [WINDOW_WIDTH - WINDOW_WIDTH // 15 +
-                                 (WINDOW_WIDTH // (WINDOW_WIDTH // 300)), 0]
-    line_menu_finish_pos = (0, line_right_menu_start_pos[1])
+
+    line_menu_finish_pos = (0, 0)
 
     take_pause = False
     x, y = 0, 0
@@ -469,33 +453,14 @@ if __name__ == '__main__':
                                                      (WINDOW_WIDTH // (WINDOW_WIDTH // 300)),
                                                      WINDOW_WIDTH // (WINDOW_WIDTH // 25)]
 
-                        # right_menu_animation = Animation(
-                        #     start_pos=[WINDOW_WIDTH - WINDOW_WIDTH // 3 +
-                        #                (WINDOW_WIDTH // (
-                        #                        WINDOW_WIDTH // 300)),
-                        #                WINDOW_WIDTH // (
-                        #                        WINDOW_WIDTH // 25)],
-                        #     finish_pos=[WINDOW_WIDTH - WINDOW_WIDTH // 3,
-                        #                 WINDOW_WIDTH // (
-                        #                         WINDOW_WIDTH // 25)],
-                        #     speed=500)
-                        # # right_menu_pos = (WINDOW_WIDTH - WINDOW_WIDTH // 3, WINDOW_HEIGHT // (WINDOW_HEIGHT // 25))
-                        # right_menu_skin_btn_animation = Animation(
-                        #     finish_pos=(WINDOW_WIDTH - WINDOW_WIDTH // 3 - 25,
-                        #                 WINDOW_HEIGHT // (WINDOW_HEIGHT // 25) + 655),
-                        #     start_pos=(WINDOW_WIDTH - WINDOW_WIDTH // 3 - 25 + 500,
-                        #                WINDOW_HEIGHT // (WINDOW_HEIGHT // 25) + 655),
-                        #     speed=1200)
-
-            # shop.render(screen)
-            if clicker.is_paused:
-                if take_pause:
-                    screen.blit(pause.render(), (0, 0))
-                else:
-                    screen.blit(pause.render(), (0, 0))
-            if right_menu_is_showing:
-                right_menu = RightMenu()
-                right_menu.show()
+        if clicker.is_paused:
+            if take_pause:
+                screen.blit(pause.render(), (0, 0))
+            else:
+                screen.blit(pause.render(), (0, 0))
+        if right_menu_is_showing:
+            right_menu = RightMenu()
+            right_menu.show()
 
             if image:
                 image = pygame.transform.scale(image, (WINDOW_WIDTH // 26, WINDOW_HEIGHT // 20))
