@@ -9,8 +9,13 @@ print(pygame.display.Info().current_w, pygame.display.Info().current_h)
 
 SURFACE = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
 pygame.quit()
+COLORS = ((42, 82, 190), (0, 0, 0), (255, 255, 255))
 TIMER_EVENT = pygame.USEREVENT + 1
 AUTO_CLICK_EVENT = pygame.USEREVENT + 2
+RIGHT_MENU_IS_SHOWING = False
+image2 = False
+IS_DARK_MODE = False
+SETTINGS_IS_SHOWING = False
 
 
 def to_fixed(num_obj, digits=0):
@@ -94,6 +99,8 @@ class Clicker:
         centre_x, centre_y = self.centre
         d = self.radius ** 2 - ((centre_x - x) ** 2 + (centre_y - y) ** 2)
         if d >= 0:
+            global flash_background
+            flash_background = True
             self.radius = min(self.radius + 2, self.max_radius)
             self.skin_size = (self.radius * 2, self.radius * 2)
             self.add_score()
@@ -149,16 +156,15 @@ class Button:
         self.form = form
         self.font_color = (255, 255, 255)
         self.font_size = WINDOW_WIDTH // (WINDOW_WIDTH // 24)
-        self.active_clr = (42, 82, 190, 100)
         self.alpha = 255
-        self.border_color = 'black'
+        self.border_color = COLORS[1]
         self.pause_button_size = WINDOW_WIDTH // 3, WINDOW_HEIGHT // 13.32
         self.coeff_x, self.coeff_y = 0, 0
 
         self.install_event_filter()
 
         pygame.draw.rect(self.form,
-                         self.active_clr,
+                         (COLORS[0][0], COLORS[0][1], COLORS[0][2], 100),
                          (self.x, self.y,
                           self.width, self.height),
                          width=0,
@@ -171,16 +177,21 @@ class Button:
                          border_radius=self.width // (self.width // 15))
 
         self.font = pygame.font.Font("Fonts/beer money.ttf", self.font_size)
-        self.text = self.font.render(text, True, self.font_color)
+        self.text = self.font.render(text, True, COLORS[2])
         screen.blit(self.text, (self.x + ((self.width - self.text.get_width()) // 2),
                                 self.y + ((self.height - self.text.get_height()) // 2)))
+
+    def is_button_enter(self):
+        """Функция проверяет наличие над кнопкой курсора"""
+        x1, y1, x2, y2 = self.x, self.y, self.x + self.width, self.y + self.height
+        if x in range(int(x1), int(x2)) and y in range(int(y1), int(y2)):
+            return True
+        return False
 
     def install_event_filter(self):
         """EventFilter, в котором происходит обработка событий"""
         global x, y
-        if check_button_enter((self.x, self.y,
-                               self.x + self.width,
-                               self.y + self.height)):
+        if self.is_button_enter():
             self.coeff_x = WINDOW_WIDTH // (WINDOW_WIDTH // 25)
             self.coeff_y = WINDOW_WIDTH // (WINDOW_WIDTH // 10)
             self.x -= self.coeff_x
@@ -190,10 +201,46 @@ class Button:
             self.font_size = self.font_size + self.coeff_x // 5
             if event.type == pygame.MOUSEBUTTONDOWN:
                 self.active_clr = (255, 255, 255, self.alpha)
-                self.font_color = (42, 82, 190, self.alpha)
+                self.font_color = (COLORS[0], self.alpha)
             if event.type == pygame.MOUSEMOTION or event.type == pygame.MOUSEBUTTONUP:
                 self.font_color = (255, 255, 255)
-                self.active_clr = (42, 82, 190, self.alpha)
+                self.active_clr = (COLORS[0], self.alpha)
+
+
+class Settings:
+    def __init__(self):
+        global clock, IS_DARK_MODE, COLORS
+        self.alpha = 255
+        pygame.draw.rect(screen, COLORS[1], (WINDOW_WIDTH // (WINDOW_WIDTH // 100),
+                                             int(WINDOW_HEIGHT * 0.130),
+                                             WINDOW_WIDTH // (WINDOW_WIDTH // 1000),
+                                             int(WINDOW_HEIGHT * 0.651)),
+                         width=WINDOW_HEIGHT // (WINDOW_HEIGHT // 15),
+                         border_radius=WINDOW_HEIGHT // (WINDOW_HEIGHT // 15))
+        pygame.draw.rect(screen, COLORS[0], (WINDOW_WIDTH // (WINDOW_WIDTH // 100),
+                                             int(WINDOW_HEIGHT * 0.130),
+                                             WINDOW_WIDTH // (WINDOW_WIDTH // 1000),
+                                             int(WINDOW_HEIGHT * 0.651)),
+                         width=0,
+                         border_radius=WINDOW_HEIGHT // (WINDOW_HEIGHT // 15))
+        back_btn = Button(screen, (WINDOW_WIDTH // (WINDOW_WIDTH // 100),
+                                   int(WINDOW_HEIGHT * 0.130),
+                                   WINDOW_WIDTH // (WINDOW_WIDTH // 300),
+                                   int(WINDOW_HEIGHT * 0.651)), 'Назад')
+        if back_btn.is_button_enter() and event.type == pygame.MOUSEBUTTONDOWN:
+            global SETTINGS_IS_SHOWING
+            SETTINGS_IS_SHOWING = False
+        btn_text = 'Тёмная тема' if IS_DARK_MODE else 'Cветлая тема'
+        display_mode_btn = Button(screen, (WINDOW_WIDTH // (WINDOW_WIDTH // 400),
+                                           int(WINDOW_HEIGHT * 0.130),
+                                           WINDOW_WIDTH // (WINDOW_WIDTH // 300),
+                                           int(WINDOW_HEIGHT * 0.651)), btn_text)
+        if display_mode_btn.is_button_enter() and event.type == pygame.MOUSEBUTTONDOWN:
+            if IS_DARK_MODE:
+                COLORS = ((20, 20, 20), (0, 0, 0), (200, 0, 0))
+            else:
+                COLORS = ((42, 82, 190), (0, 0, 0), (255, 255, 255))
+            IS_DARK_MODE = not IS_DARK_MODE
 
 
 class Pause:
@@ -219,19 +266,19 @@ class Pause:
 
     def draw_buttons(self):
         """Функция рисует кнопки в меню паузы"""
+        global SETTINGS_IS_SHOWING
         for i in range(3):
             btn = Button(screen, (WINDOW_WIDTH // 3.3,
                                   self.buttons_titles[i][1],
                                   self.pause_button_size[0],
                                   self.pause_button_size[1]), self.buttons_titles[i][0])
-            if check_button_enter((btn.x, btn.y,
-                                   btn.x + btn.width,
-                                   btn.y + btn.height)) and event.type == pygame.MOUSEBUTTONDOWN:
-                if i == 0:  # Кнопка продолжения игры
+            if btn.is_button_enter() and event.type == pygame.MOUSEBUTTONDOWN:
+                if i == 0 and not SETTINGS_IS_SHOWING:  # Кнопка продолжения игры
                     clicker.switch_pause()
-                elif i == 1:  # Кнопка Главного меню игры
+                elif i == 1 and not SETTINGS_IS_SHOWING:  # Кнопка Главного меню игры
                     print('Главное меню в разработке')
-                elif i == 2:  # Кнопка выхода из игры
+                    SETTINGS_IS_SHOWING = True
+                elif i == 2 and not SETTINGS_IS_SHOWING:  # Кнопка выхода из игры
                     global running
                     running = False
 
@@ -252,10 +299,11 @@ class RightMenu:
         pygame.draw.polygon(screen, self.color, self.main_points, width=0)
         skins_button = Button(screen, (WINDOW_WIDTH / 1.55 - A * 2, WINDOW_HEIGHT / 1.14,
                                        int(WINDOW_WIDTH / 9), int(WINDOW_HEIGHT / 14)), 'Скины')
-        boosters_button = Button(screen, (right_menu_btns_start_pos[0] + 200, WINDOW_HEIGHT / 1.14,
+        boosters_button = Button(screen, (WINDOW_WIDTH / 1.55 - A + 200, WINDOW_HEIGHT / 1.14,
                                           int(WINDOW_WIDTH / 9), int(WINDOW_HEIGHT / 14)),
                                  'Ускорители')
-        pygame.draw.rect(screen, 'white', (0 - A * 5, 0, WINDOW_WIDTH * 1.5, WINDOW_HEIGHT * 0.032))
+        pygame.draw.rect(screen, COLORS[2],
+                         (0 - A * 5, 0, WINDOW_WIDTH * 1.5, WINDOW_HEIGHT * 0.032))
         if flag:
             points = []
             for i in range(len(skins)):
@@ -359,10 +407,10 @@ class ItemCell:
     #         self.font_size = self.font_size + self.coeff_x // 5
     #         if event.type == pygame.MOUSEBUTTONDOWN:
     #             self.active_clr = (255, 255, 255, self.alpha)
-    #             self.font_color = (42, 82, 190, self.alpha)
+    #             self.font_color = (COLORS[0], self.alpha)
     #         if event.type == pygame.MOUSEMOTION or event.type == pygame.MOUSEBUTTONUP:
     #             self.font_color = (255, 255, 255)
-    #             self.active_clr = (42, 82, 190, self.alpha)
+    #             self.active_clr = (COLORS[0], self.alpha)
 
 
 class ColorCell(ItemCell):
@@ -390,7 +438,7 @@ def click_timer():
     return result
 
 
-def check_button_enter(button_pos):
+def is_button_enter(button_pos):
     """Функция проверяет наличие над кнопкой курсора"""
     x1, y1, x2, y2 = button_pos
     if x in range(int(x1), int(x2)) and y in range(int(y1), int(y2)):
@@ -430,7 +478,8 @@ if __name__ == '__main__':
 
     take_pause = False
     x, y = 0, 0
-    image = pygame.image.load('Skins\cursor_blue.png')
+    # image = pygame.image.load("Skins\cursor_green.png")
+    image = pygame.image.load('Skins\cursor_blood.png')
     clock = pygame.time.Clock()
     intro = True
     intr = pygame.image.load('BackGrounds\INTRO.png')
@@ -440,6 +489,7 @@ if __name__ == '__main__':
     flag = True
     c = 0
     while running:
+        flash_background = False
         if intro:
             # screen.fill((0, 0, 0))
             #
@@ -496,8 +546,10 @@ if __name__ == '__main__':
                         if event.key == pygame.K_p:
                             clicker.switch_pause()
                             pygame.display.set_caption('Clicker (paused)')
-
-            screen.fill((50, 50, 50))
+            if flash_background:
+                screen.fill(COLORS[2])
+            else:
+                screen.fill((50, 50, 50))
             clicker.render(screen)
             right_menu = RightMenu()
             points = right_menu.show(shop.items, shop.colors)
@@ -505,14 +557,12 @@ if __name__ == '__main__':
                 shop_button = Button(screen, (
                     WINDOW_WIDTH / 38, WINDOW_HEIGHT / 1.14, int(WINDOW_WIDTH / 9),
                     int(WINDOW_HEIGHT / 14)), 'Магазин')
-                if check_button_enter((shop_button.x, shop_button.y,
-                                       shop_button.x + shop_button.width,
-                                       shop_button.y + shop_button.height)) and click:
+                if shop_button.is_button_enter() and click:
                     right_menu_is_open = not right_menu_is_open
                 for elem in points:
-                    if check_button_enter((elem[0], elem[1],
-                                           elem[0] + elem[2],
-                                           elem[1] + elem[3])) and \
+                    if is_button_enter((elem[0], elem[1],
+                                        elem[0] + elem[2],
+                                        elem[1] + elem[3])) and \
                             click and clicker.money >= elem[5]:
                         if len(elem[4].split('.')) == 1:
                             flag, money = shop.buy(clicker.money, elem[4], shop.colors_dict)
@@ -533,6 +583,8 @@ if __name__ == '__main__':
                     screen.blit(pause.render(), (0, 0))
                 else:
                     screen.blit(pause.render(), (0, 0))
+            if SETTINGS_IS_SHOWING:
+                settings = Settings()
             if right_menu_is_open:
                 A = min(A + v * clock.tick() / 1000, 0)
             else:
