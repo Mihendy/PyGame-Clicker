@@ -389,7 +389,7 @@ if __name__ == '__main__':
     take_pause = False
     x, y = 0, 0
     # image = pygame.image.load("Skins\cursor_green.png")
-    image = pygame.image.load('Skins\cursor_blue.png')
+    image = pygame.image.load('Skins\cursor_blood.png')
     # v = WINDOW_WIDTH  # пикселей в секунду
     # a = WINDOW_WIDTH // 2
     clock = pygame.time.Clock()
@@ -438,7 +438,9 @@ if __name__ == '__main__':
                     click = True
                 if event.type == pygame.MOUSEBUTTONUP:
                     # image = pygame.image.load("Skins\cursor_green.png")
-                    image = pygame.image.load("Skins\cursor_blue.png")
+                    # image = pygame.image.load("Skins\cursor_blue.png")
+                    image = pygame.image.load('Skins\cursor_blood.png')
+
                     image2 = False
                 if clicker.is_paused:
                     if event.type == pygame.KEYDOWN:
