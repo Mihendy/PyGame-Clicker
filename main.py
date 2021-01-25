@@ -224,8 +224,8 @@ class Pause:
                                    btn.y + btn.height)) and event.type == pygame.MOUSEBUTTONDOWN:
                 if i == 0:  # Кнопка продолжения игры
                     clicker.switch_pause()
-                elif i == 1:  # Кнопка Настроек игры
-                    print('Настройки в разработке')
+                elif i == 1:  # Кнопка Главного меню игры
+                    print('Главное меню в разработке')
                 elif i == 2:  # Кнопка выхода из игры
                     global running
                     running = False
