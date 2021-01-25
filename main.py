@@ -252,7 +252,7 @@ class RightMenu:
         pygame.draw.polygon(screen, self.color, self.main_points, width=0)
         skins_button = Button(screen, (WINDOW_WIDTH / 1.55 - A * 2, WINDOW_HEIGHT / 1.14,
                                        int(WINDOW_WIDTH / 9), int(WINDOW_HEIGHT / 14)), 'Скины')
-        boosters_button = Button(screen, (WINDOW_WIDTH / 1.25 - A * 2, WINDOW_HEIGHT / 1.14,
+        boosters_button = Button(screen, (right_menu_btns_start_pos[0] + 200, WINDOW_HEIGHT / 1.14,
                                           int(WINDOW_WIDTH / 9), int(WINDOW_HEIGHT / 14)),
                                  'Ускорители')
         pygame.draw.rect(screen, 'white', (0 - A * 5, 0, WINDOW_WIDTH * 1.5, WINDOW_HEIGHT * 0.032))
@@ -476,7 +476,9 @@ if __name__ == '__main__':
                     click = True
                 if event.type == pygame.MOUSEBUTTONUP:
                     # image = pygame.image.load("Skins\cursor_green.png")
-                    image = pygame.image.load("Skins\cursor_blue.png")
+                    # image = pygame.image.load("Skins\cursor_blue.png")
+                    image = pygame.image.load('Skins\cursor_blood.png')
+
                     image2 = False
                 if clicker.is_paused:
                     if event.type == pygame.KEYDOWN:
