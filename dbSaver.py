@@ -13,15 +13,16 @@ def upload(file_path, values):
                         click       STRING,
                         click_money STRING,
                         cps         STRING,
-                        skin_path   STRING
+                        skin_path   STRING,
+                        color       STRING
                                             );''')
         con.commit()
     con = sqlite3.connect(file_path)
-    is_paused, score, money, click, click_money, cps, skin_path = values
+    is_paused, score, money, click, click_money, cps, skin_path, color = values
     cur = con.cursor()
-    cur.execute("""INSERT INTO Clicker(is_paused, score, money, click, click_money, cps, skin_path)
-                VALUES({}, '{}', '{}', '{}', '{}', '{}', '{}')"""
-                .format(is_paused, score, money, click, click_money, cps, skin_path))
+    cur.execute("""INSERT INTO Clicker(is_paused, score, money, click, click_money,
+     cps, skin_path, color) VALUES({}, '{}', '{}', '{}', '{}', '{}', '{}', '{}')"""
+                .format(is_paused, score, money, click, click_money, cps, skin_path, color))
     con.commit()
     return None
 

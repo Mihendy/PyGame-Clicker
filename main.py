@@ -1,5 +1,5 @@
 import pygame
-import dbSaver
+import json
 
 pygame.init()
 WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = pygame.display.Info().current_w, \
@@ -27,8 +27,10 @@ class Clicker:
             self.click_money = 0.2
             self.cps = 0.5  # клики в секунду (clicks per second)
             self.skin_path = None
+            self.color = 'red'
         else:
-            self.is_paused, self.score, self.money, self.click, self.click_money, self.cps, self.skin_path = values
+            self.is_paused, self.score, self.money, self.click, \
+            self.click_money, self.cps, self.skin_path, self.color = values
         self.money = float(self.money)
         # self.min_radius, self.max_radius, self.radius - это значения
         # для размеров скелета кликера.
@@ -64,8 +66,10 @@ class Clicker:
         # ==================================
 
         # 3)==============СКИН==============
+        if self.skin_path == 'None':
+            self.skin_path = None
         if self.skin_path is None:
-            pygame.draw.circle(screen, (255, 0, 0), self.centre, self.radius)
+            pygame.draw.circle(screen, self.color, self.centre, self.radius)
         if self.skin is None and self.skin_path is not None:
             self.skin = pygame.image.load(self.skin_path)
         if self.skin is not None:
@@ -122,12 +126,13 @@ class Clicker:
 
     def set_skin(self, skin=None):
         self.skin_path = skin
+        self.skin = None
+        self.skin_copy = None
 
     def to_save_info(self):
         """Метод этого класса вернёт список с информацией о данном классе (нужна для работы с БД)"""
         return [self.is_paused, self.score, to_fixed(self.money, 3), self.click, self.click_money,
-                self.cps,
-                self.skin_path]
+                self.cps, self.skin_path, self.color]
 
 
 class Button:
@@ -233,58 +238,51 @@ class Pause:
 
 class RightMenu:
     def __init__(self):
-        self.width, self.height = WINDOW_WIDTH // 3, WINDOW_HEIGHT - WINDOW_HEIGHT // 22
+        # self.width, self.height = WINDOW_WIDTH // 3, WINDOW_HEIGHT - WINDOW_HEIGHT // 22
         self.color = (20, 20, 20)
         self.pos = (WINDOW_WIDTH - WINDOW_WIDTH // 3, WINDOW_HEIGHT // (WINDOW_HEIGHT // 25))
         self.button_pos = self.pos[:]
-        self.main_points = [
-            (right_menu_start_pos[0] + WINDOW_WIDTH // (WINDOW_WIDTH // 100), self.pos[1]),
-            (right_menu_start_pos[0],
-             self.pos[1] + self.height),
-            (right_menu_start_pos[0] + self.width, self.pos[1] + self.height),
-            (right_menu_start_pos[0] + self.width, self.pos[1])]
+        self.main_points = [(int(WINDOW_WIDTH / 4 * 3 - A), 0),
+                            (WINDOW_WIDTH - A, 0),
+                            (WINDOW_WIDTH - A, WINDOW_HEIGHT),
+                            (int(WINDOW_WIDTH / 1.5 - A), WINDOW_HEIGHT)]
 
-    def show(self, reverse=False):
-        self.show_animation(reverse)
+    def show(self, items, colors):
+        skins = items + colors
         pygame.draw.polygon(screen, self.color, self.main_points, width=0)
-        skins_button = Button(screen, (right_menu_btns_start_pos[0], WINDOW_HEIGHT / 1.14,
+        skins_button = Button(screen, (WINDOW_WIDTH / 1.55 - A * 2, WINDOW_HEIGHT / 1.14,
                                        int(WINDOW_WIDTH / 9), int(WINDOW_HEIGHT / 14)), 'Скины')
-        boosters_button = Button(screen, (right_menu_btns_start_pos[0] + 200, WINDOW_HEIGHT / 1.14,
+        boosters_button = Button(screen, (WINDOW_WIDTH / 1.25 - A * 2, WINDOW_HEIGHT / 1.14,
                                           int(WINDOW_WIDTH / 9), int(WINDOW_HEIGHT / 14)),
                                  'Ускорители')
-        pygame.draw.rect(screen, 'white', (line_right_menu_start_pos[0], 0,
-                                           WINDOW_WIDTH * 1.5, WINDOW_HEIGHT * 0.032))
-
-    def show_animation(self, reverse=False):
-        global right_menu_start_pos, right_menu_finish_pos, \
-            right_menu_show_speed, right_menu_btns_start_pos, right_menu_btns_show_speed, clock, \
-            line_right_menu_speed
-        seconds = clock.tick()
-        if reverse:
-            if line_right_menu_start_pos[0] < WINDOW_WIDTH - WINDOW_WIDTH // 3 + \
-                    (WINDOW_WIDTH // (WINDOW_WIDTH // 400)):
-                line_right_menu_start_pos[0] += line_right_menu_speed * seconds / 1000
-            if right_menu_start_pos[0] < WINDOW_WIDTH - WINDOW_WIDTH // 3 + \
-                    (WINDOW_WIDTH // (WINDOW_WIDTH // 400)):
-                right_menu_start_pos[0] += right_menu_show_speed * seconds / 1000
-            if right_menu_btns_start_pos[0] < WINDOW_WIDTH - WINDOW_WIDTH // 3 + \
-                    (WINDOW_WIDTH // (WINDOW_WIDTH // 400)):
-                right_menu_btns_start_pos[0] += right_menu_btns_show_speed * seconds / 1000
-            return
-        if right_menu_finish_pos[0] < right_menu_start_pos[0]:
-            right_menu_start_pos[0] -= right_menu_show_speed * seconds / 1000
-        if right_menu_finish_pos[0] < right_menu_btns_start_pos[0]:
-            right_menu_btns_start_pos[0] -= right_menu_btns_show_speed * seconds / 1000
-        if line_menu_finish_pos[0] < line_right_menu_start_pos[0]:
-            line_right_menu_start_pos[0] -= line_right_menu_speed * seconds / 1000
+        pygame.draw.rect(screen, 'white', (0 - A * 5, 0, WINDOW_WIDTH * 1.5, WINDOW_HEIGHT * 0.032))
+        if flag:
+            points = []
+            for i in range(len(skins)):
+                y_coff = i // 3
+                x_coff = i % 3
+                w, h = WINDOW_WIDTH // 19, WINDOW_HEIGHT // 9
+                x, y = (int(WINDOW_WIDTH / 4 * 3 + WINDOW_WIDTH // 40 + (WINDOW_WIDTH // 40 + w)
+                            * x_coff - A), WINDOW_WIDTH // 40 + (h + WINDOW_WIDTH // 40) * y_coff)
+                skins[i].render(screen, (x, y), (w, h))
+                if isinstance(skins[i], ColorCell):
+                    points.append((x, y, w, h, skins[i].color, skins[i].price))
+                else:
+                    points.append((x, y, w, h, skins[i].ico_name, skins[i].price))
+            return points
+        # else:
+        #     for i in range(len(boosters)):
+        #         y_coff = i // 3
+        #         x_coff = i % 3
+        #         w, h = WINDOW_WIDTH // 19, WINDOW_HEIGHT // 9
+        #         items[i].render(screen, (
+        #             int(WINDOW_WIDTH / 4 * 3 + WINDOW_WIDTH // 40 + (
+        #                     WINDOW_WIDTH // 40 + w) * x_coff - A),
+        #             WINDOW_WIDTH // 40 + (h + WINDOW_WIDTH // 40) * y_coff), (w, h))
 
 
 class Shop:
-    def __init__(self):
-        self.side = min(WINDOW_WIDTH, WINDOW_HEIGHT) // 10
-        self.ico = pygame.image.load('data/market.png')
-        self.ico_size = self.ico_w, self.ico_h = self.ico.get_size()
-        self.ico_copy = self.ico
+    def __init__(self, bought=None):
         self.skins = {"blue_neon.png": 3500,
                       'earth.png': 5000,
                       'kolobok.png': 3000,
@@ -292,19 +290,28 @@ class Shop:
                       'save_point.png': 4000
                       }
 
-        self.colors = {'red': 0,
-                       'blue': 0,
-                       'green': 0,
-                       'light_gray': 300,
-                       'gray': 300,
-                       'dark_gray': 300,
-                       }
+        self.colors_dict = {'red': 0,
+                            'blue': 0,
+                            'green': 0,
+                            'gray': 300,
+                            }
 
         self.cursors = {}
 
         self.backgrounds = {}
 
-        self.bought = []
+        self.boosters = {}
+        if bought is not None:
+            self.bought = bought
+        else:
+            self.bought = []
+
+        self.items = []
+        for k, v in self.skins.items():
+            self.items.append(ItemCell(v, k, self.is_bought(k)))
+        self.colors = []
+        for k, v in self.colors_dict.items():
+            self.colors.append(ColorCell(v, k, self.is_bought(k)))
 
     def buy(self, money, obj, category):
         if obj in self.bought:
@@ -314,14 +321,14 @@ class Shop:
             return True, money - category[obj]
         return False, money
 
-    def render(self, screen):
-        pass
+    def is_bought(self, name):
+        return name in self.bought
 
 
 class ItemCell:
     def __init__(self, price, ico_name, is_bought):
-        self.price, self.ico, self.is_bought = price, pygame.image.load(
-            f'Skins/{ico_name}'), is_bought
+        self.price, self.ico, self.is_bought, self.ico_name = price, pygame.image.load(
+            f'Skins/{ico_name}'), is_bought, f'Skins/{ico_name}'
 
     def render(self, screen, pos, size):
         """Отображает ячейку товара"""
@@ -336,7 +343,44 @@ class ItemCell:
             screen.blit(text, (x + 5, y + width / 20 * 19))
             pygame.draw.rect(screen, (150, 150, 150), (x, y, width, height), 3)
         pygame.draw.rect(screen, (150, 150, 150), (x, y, width, width), 3)
-        pass
+
+    # def install_event_filter(self):
+    #     """EventFilter, в котором происходит обработка событий"""
+    #     global x, y
+    #     if check_button_enter((self.x, self.y,
+    #                            self.x + self.width,
+    #                            self.y + self.height)):
+    #         self.coeff_x = WINDOW_WIDTH // (WINDOW_WIDTH // 25)
+    #         self.coeff_y = WINDOW_WIDTH // (WINDOW_WIDTH // 10)
+    #         self.x -= self.coeff_x
+    #         self.y -= self.coeff_y
+    #         self.width += self.coeff_x * 2
+    #         self.height += self.coeff_y * 2
+    #         self.font_size = self.font_size + self.coeff_x // 5
+    #         if event.type == pygame.MOUSEBUTTONDOWN:
+    #             self.active_clr = (255, 255, 255, self.alpha)
+    #             self.font_color = (42, 82, 190, self.alpha)
+    #         if event.type == pygame.MOUSEMOTION or event.type == pygame.MOUSEBUTTONUP:
+    #             self.font_color = (255, 255, 255)
+    #             self.active_clr = (42, 82, 190, self.alpha)
+
+
+class ColorCell(ItemCell):
+    def __init__(self, price, color, is_bought):
+        self.price, self.color, self.is_bought = price, color, is_bought
+
+    def render(self, screen, pos, size):
+        """Отображает ячейку товара"""
+        width, height = size
+        x, y = pos
+        font = pygame.font.Font("Fonts/beer money.ttf", 18)
+        text = font.render(str(self.price), True,
+                           (50, 150, 50) if self.price <= MONEY else (150, 50, 50))
+        pygame.draw.ellipse(screen, self.color, (x, y, width, width))
+        if not self.is_bought:
+            screen.blit(text, (x + 5, y + width / 20 * 19))
+            pygame.draw.rect(screen, (150, 150, 150), (x, y, width, height), 3)
+        pygame.draw.rect(screen, (150, 150, 150), (x, y, width, width), 3)
 
 
 def click_timer():
@@ -359,46 +403,40 @@ if __name__ == '__main__':
     pygame.mouse.set_visible(False)
     screen = pygame.display.set_mode(WINDOW_SIZE)
     pygame.display.set_caption('Clicker')
+
     try:
-        data = dbSaver.download('data/save_data_1.db')
+        with open('data/clicker.json') as file:
+            data = json.load(file)
+        # data = dbSaver.download('data/save_data_1.db')
         clicker = Clicker(data)
     except FileNotFoundError:
         clicker = Clicker()
+
     pause = Pause()
-    clicker.set_skin('Skins/github_easter_egg.png')
+
+    try:
+        with open('data/shop.json') as file:
+            data = json.load(file)
+        shop = Shop(data)
+    except FileNotFoundError:
+        shop = Shop()
+
+    A = -WINDOW_WIDTH
     print(clicker.to_save_info())
     running = True
-    right_menu_is_showing = False
-    image2 = False
+    right_menu_is_open = False
 
-    right_menu_show_speed = 13000
-    right_menu_btns_show_speed = 12000
-    right_menu_finish_pos = [WINDOW_WIDTH - WINDOW_WIDTH // 3 +
-                             WINDOW_WIDTH // (WINDOW_WIDTH // 150),
-                             WINDOW_WIDTH // (WINDOW_WIDTH // 25)]
-    right_menu_start_pos = [WINDOW_WIDTH - WINDOW_WIDTH // 3 +
-                            (WINDOW_WIDTH // (WINDOW_WIDTH // 300)),
-                            WINDOW_WIDTH // (WINDOW_WIDTH // 25)]
-    right_menu_btns_start_pos = right_menu_start_pos
-    line_right_menu_speed = 13000
-    reverse_line = False
-    line_right_menu_start_pos = [WINDOW_WIDTH - WINDOW_WIDTH // 15 +
-                                 (WINDOW_WIDTH // (WINDOW_WIDTH // 300)), 0]
-    line_menu_finish_pos = (0, line_right_menu_start_pos[1])
+    image2 = False
 
     take_pause = False
     x, y = 0, 0
-    # image = pygame.image.load("Skins\cursor_green.png")
     image = pygame.image.load('Skins\cursor_blue.png')
-    # v = WINDOW_WIDTH  # пикселей в секунду
-    # a = WINDOW_WIDTH // 2
     clock = pygame.time.Clock()
     intro = True
     intr = pygame.image.load('BackGrounds\INTRO.png')
     intro_image = pygame.transform.scale(intr, (
         min(WINDOW_WIDTH, WINDOW_HEIGHT), min(WINDOW_WIDTH, WINDOW_HEIGHT)))
-    a = 0
-    v = 40
+    v = 1500
     flag = True
     c = 0
     while running:
@@ -459,6 +497,8 @@ if __name__ == '__main__':
 
             screen.fill((50, 50, 50))
             clicker.render(screen)
+            right_menu = RightMenu()
+            points = right_menu.show(shop.items, shop.colors)
             if not clicker.is_paused:
                 shop_button = Button(screen, (
                     WINDOW_WIDTH / 38, WINDOW_HEIGHT / 1.14, int(WINDOW_WIDTH / 9),
@@ -466,28 +506,35 @@ if __name__ == '__main__':
                 if check_button_enter((shop_button.x, shop_button.y,
                                        shop_button.x + shop_button.width,
                                        shop_button.y + shop_button.height)) and click:
-                    if right_menu_is_showing and click_timer():
-                        right_menu_is_showing = False
-                    elif click_timer():
-                        right_menu_is_showing = True
-                        line_right_menu_start_pos = [WINDOW_WIDTH - WINDOW_WIDTH // 3 +
-                                                     (WINDOW_WIDTH // (WINDOW_WIDTH // 300)),
-                                                     WINDOW_WIDTH // (WINDOW_WIDTH // 25)]
-                        right_menu_start_pos = [WINDOW_WIDTH - WINDOW_WIDTH // 3 +
-                                                (WINDOW_WIDTH // (WINDOW_WIDTH // 300)),
-                                                WINDOW_WIDTH // (WINDOW_WIDTH // 25)]
-
+                    right_menu_is_open = not right_menu_is_open
+                for elem in points:
+                    if check_button_enter((elem[0], elem[1],
+                                           elem[0] + elem[2],
+                                           elem[1] + elem[3])) and \
+                            click and clicker.money >= elem[5]:
+                        if len(elem[4].split('.')) == 1:
+                            flag, money = shop.buy(clicker.money, elem[4], shop.colors_dict)
+                            if flag:
+                                clicker.set_skin()
+                                clicker.color = elem[4]
+                                clicker.money = money
+                                shop = Shop(shop.bought)
+                        else:
+                            flag, money = shop.buy(clicker.money,
+                                                   elem[4].split('/')[-1], shop.skins)
+                            if flag:
+                                clicker.set_skin(elem[4])
+                                clicker.money = money
+                                shop = Shop(shop.bought)
             if clicker.is_paused:
                 if take_pause:
                     screen.blit(pause.render(), (0, 0))
                 else:
                     screen.blit(pause.render(), (0, 0))
-            right_menu = RightMenu()
-            if right_menu_is_showing:
-                right_menu.show()
+            if right_menu_is_open:
+                A = min(A + v * clock.tick() / 1000, 0)
             else:
-                right_menu.show(True)
-
+                A = max(A - v * clock.tick() / 1000, -WINDOW_WIDTH // 2)
             if image:
                 image = pygame.transform.scale(image, (WINDOW_WIDTH // 26, WINDOW_HEIGHT // 20))
                 screen.blit(image, (x - WINDOW_WIDTH // 26 // 3, y - WINDOW_HEIGHT // 20 // 3))
@@ -496,5 +543,9 @@ if __name__ == '__main__':
                 screen.blit(image2, (x - WINDOW_WIDTH // 26 // 3, y - WINDOW_HEIGHT // 20 // 3))
             pygame.display.flip()
     clicker.is_paused = False
-    dbSaver.upload('data/save_data_1.db', clicker.to_save_info())
+    # dbSaver.upload('data/save_data_1.db', clicker.to_save_info())
+    with open('data/shop.json', 'w') as file:
+        json.dump(shop.bought, file)
+    with open('data/clicker.json', 'w') as file:
+        json.dump(clicker.to_save_info(), file)
     pygame.quit()
