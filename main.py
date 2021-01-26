@@ -12,10 +12,26 @@ pygame.quit()
 COLORS = ((42, 82, 190), (0, 0, 0), (255, 255, 255))
 TIMER_EVENT = pygame.USEREVENT + 1
 AUTO_CLICK_EVENT = pygame.USEREVENT + 2
+SKINS_SHOWING = True
 RIGHT_MENU_IS_SHOWING = False
 image2 = False
 IS_DARK_MODE = False
 SETTINGS_IS_SHOWING = False
+
+
+def click_timer():
+    """ Таймер, предотворяющий залипание клавиш"""
+    result = True if clock.tick() / 1000 > 0.1 else False
+    result = True
+    return result
+
+
+def is_mouse_enter(button_pos):
+    """Функция проверяет наличие над объектом курсора"""
+    x1, y1, x2, y2 = button_pos
+    if x in range(int(x1), int(x2)) and y in range(int(y1), int(y2)):
+        return True
+    return False
 
 
 def to_fixed(num_obj, digits=0):
@@ -29,13 +45,12 @@ class Clicker:
             self.score = 0
             self.money = 100.0
             self.click = 1
-            self.click_money = 0.2
             self.cps = 0.5  # клики в секунду (clicks per second)
             self.skin_path = None
             self.color = 'red'
         else:
             self.is_paused, self.score, self.money, self.click, \
-            self.click_money, self.cps, self.skin_path, self.color = values
+            self.cps, self.skin_path, self.color = values
         self.money = float(self.money)
         # self.min_radius, self.max_radius, self.radius - это значения
         # для размеров скелета кликера.
@@ -103,8 +118,7 @@ class Clicker:
             flash_background = True
             self.radius = min(self.radius + 2, self.max_radius)
             self.skin_size = (self.radius * 2, self.radius * 2)
-            self.add_score()
-            self.add_money()
+            self.add()
             if self.skin is not None:
                 self.skin_copy = pygame.transform.scale(self.skin, self.skin_size)
 
@@ -121,11 +135,9 @@ class Clicker:
         pygame.time.set_timer(TIMER_EVENT, self.delay if not self.is_paused else 0)
         pygame.time.set_timer(AUTO_CLICK_EVENT, 1000 if not self.is_paused else 0)
 
-    def add_score(self):
+    def add(self):
         self.score += self.click
-
-    def add_money(self):
-        self.money += self.click_money
+        self.money += self.click / 5
 
     def auto_add(self):
         self.score += self.cps
@@ -138,8 +150,8 @@ class Clicker:
 
     def to_save_info(self):
         """Метод этого класса вернёт список с информацией о данном классе (нужна для работы с БД)"""
-        return [self.is_paused, self.score, to_fixed(self.money, 3), self.click, self.click_money,
-                self.cps, self.skin_path, self.color]
+        return [self.is_paused, self.score, to_fixed(self.money, 3), self.click, self.cps,
+                self.skin_path, self.color]
 
 
 class Button:
@@ -293,19 +305,20 @@ class RightMenu:
                             (WINDOW_WIDTH - A, 0),
                             (WINDOW_WIDTH - A, WINDOW_HEIGHT),
                             (int(WINDOW_WIDTH / 1.5 - A), WINDOW_HEIGHT)]
-
-    def show(self, items, colors):
-        skins = items + colors
         pygame.draw.polygon(screen, self.color, self.main_points, width=0)
-        skins_button = Button(screen, (WINDOW_WIDTH / 1.55 - A * 2, WINDOW_HEIGHT / 1.14,
-                                       int(WINDOW_WIDTH / 9), int(WINDOW_HEIGHT / 14)), 'Скины')
-        boosters_button = Button(screen, (WINDOW_WIDTH / 1.55 - A + 200, WINDOW_HEIGHT / 1.14,
-                                          int(WINDOW_WIDTH / 9), int(WINDOW_HEIGHT / 14)),
-                                 'Ускорители')
         pygame.draw.rect(screen, COLORS[2],
                          (0 - A * 5, 0, WINDOW_WIDTH * 1.5, WINDOW_HEIGHT * 0.032))
-        if flag:
-            points = []
+        self.skins_button = Button(screen, (WINDOW_WIDTH / 1.55 - A * 2, WINDOW_HEIGHT / 1.14,
+                                            int(WINDOW_WIDTH / 9), int(WINDOW_HEIGHT / 14)),
+                                   'Скины')
+        self.boosters_button = Button(screen, (WINDOW_WIDTH / 1.25 - A * 2,
+                                               WINDOW_HEIGHT / 1.14, int(WINDOW_WIDTH / 9),
+                                               int(WINDOW_HEIGHT / 14)), 'Ускорители')
+
+    def show(self, items, colors, boosters):
+        skins = items + colors
+        points = []
+        if SKINS_SHOWING:
             for i in range(len(skins)):
                 y_coff = i // 3
                 x_coff = i % 3
@@ -318,19 +331,23 @@ class RightMenu:
                 else:
                     points.append((x, y, w, h, skins[i].ico_name, skins[i].price))
             return points
-        # else:
-        #     for i in range(len(boosters)):
-        #         y_coff = i // 3
-        #         x_coff = i % 3
-        #         w, h = WINDOW_WIDTH // 19, WINDOW_HEIGHT // 9
-        #         items[i].render(screen, (
-        #             int(WINDOW_WIDTH / 4 * 3 + WINDOW_WIDTH // 40 + (
-        #                     WINDOW_WIDTH // 40 + w) * x_coff - A),
-        #             WINDOW_WIDTH // 40 + (h + WINDOW_WIDTH // 40) * y_coff), (w, h))
+        else:
+            for i in range(len(boosters)):
+                y_coff = i // 3
+                x_coff = i % 3
+                w, h = WINDOW_WIDTH // 19, WINDOW_HEIGHT // 9
+                x, y = (int(WINDOW_WIDTH / 4 * 3 + WINDOW_WIDTH // 40 + (WINDOW_WIDTH // 40 + w)
+                            * x_coff - A), WINDOW_WIDTH // 40 + (h + WINDOW_WIDTH // 40) * y_coff)
+                boosters[i].render(screen, (
+                    int(WINDOW_WIDTH / 4 * 3 + WINDOW_WIDTH // 40 + (
+                            WINDOW_WIDTH // 40 + w) * x_coff - A),
+                    WINDOW_WIDTH // 40 + (h + WINDOW_WIDTH // 40) * y_coff), (w, h))
+                points.append((x, y, w, h, boosters[i].ico_name, boosters[i].price))
+            return points
 
 
 class Shop:
-    def __init__(self, bought=None):
+    def __init__(self, info=None):
         self.skins = {"blue_neon.png": 3500,
                       'earth.png': 5000,
                       'kolobok.png': 3000,
@@ -346,13 +363,21 @@ class Shop:
 
         self.cursors = {}
 
-        self.backgrounds = {}
-
-        self.boosters = {}
-        if bought is not None:
-            self.bought = bought
+        if info is not None:
+            self.bought = info[0]
+            self.boosters_dict = info[1]
         else:
             self.bought = []
+            self.boosters_dict = {'clicks_per_click_x1.png': 50,
+                                  'clicks_per_click_x10.png': 5500,
+                                  'clicks_per_click_x100.png': 50000,
+                                  'clicks_per_second_x0.01.png': 5,
+                                  'clicks_per_second_x0.1.png': 105,
+                                  'clicks_per_second_x0.5.png': 1000,
+                                  'clicks_per_second_x5.png': 5000,
+                                  'clicks_per_second_x10.png': 15000,
+                                  'clicks_per_second_x100.png': 500000,
+                                  }
 
         self.items = []
         for k, v in self.skins.items():
@@ -360,6 +385,9 @@ class Shop:
         self.colors = []
         for k, v in self.colors_dict.items():
             self.colors.append(ColorCell(v, k, self.is_bought(k)))
+            self.boosters = []
+        for k, v in self.boosters_dict.items():
+            self.boosters.append(ItemCell(v, k, False))
 
     def buy(self, money, obj, category):
         if obj in self.bought:
@@ -392,26 +420,6 @@ class ItemCell:
             pygame.draw.rect(screen, (150, 150, 150), (x, y, width, height), 3)
         pygame.draw.rect(screen, (150, 150, 150), (x, y, width, width), 3)
 
-    # def install_event_filter(self):
-    #     """EventFilter, в котором происходит обработка событий"""
-    #     global x, y
-    #     if check_button_enter((self.x, self.y,
-    #                            self.x + self.width,
-    #                            self.y + self.height)):
-    #         self.coeff_x = WINDOW_WIDTH // (WINDOW_WIDTH // 25)
-    #         self.coeff_y = WINDOW_WIDTH // (WINDOW_WIDTH // 10)
-    #         self.x -= self.coeff_x
-    #         self.y -= self.coeff_y
-    #         self.width += self.coeff_x * 2
-    #         self.height += self.coeff_y * 2
-    #         self.font_size = self.font_size + self.coeff_x // 5
-    #         if event.type == pygame.MOUSEBUTTONDOWN:
-    #             self.active_clr = (255, 255, 255, self.alpha)
-    #             self.font_color = (COLORS[0], self.alpha)
-    #         if event.type == pygame.MOUSEMOTION or event.type == pygame.MOUSEBUTTONUP:
-    #             self.font_color = (255, 255, 255)
-    #             self.active_clr = (COLORS[0], self.alpha)
-
 
 class ColorCell(ItemCell):
     def __init__(self, price, color, is_bought):
@@ -429,21 +437,6 @@ class ColorCell(ItemCell):
             screen.blit(text, (x + 5, y + width / 20 * 19))
             pygame.draw.rect(screen, (150, 150, 150), (x, y, width, height), 3)
         pygame.draw.rect(screen, (150, 150, 150), (x, y, width, width), 3)
-
-
-def click_timer():
-    """ Таймер, предотворяющий залипание клавиш"""
-    result = True if clock.tick() / 1000 > 0.1 else False
-    result = True
-    return result
-
-
-def is_button_enter(button_pos):
-    """Функция проверяет наличие над кнопкой курсора"""
-    x1, y1, x2, y2 = button_pos
-    if x in range(int(x1), int(x2)) and y in range(int(y1), int(y2)):
-        return True
-    return False
 
 
 if __name__ == '__main__':
@@ -482,9 +475,6 @@ if __name__ == '__main__':
     image = pygame.image.load('Skins\cursor_blood.png')
     clock = pygame.time.Clock()
     intro = True
-    intr = pygame.image.load('BackGrounds\INTRO.png')
-    intro_image = pygame.transform.scale(intr, (
-        min(WINDOW_WIDTH, WINDOW_HEIGHT), min(WINDOW_WIDTH, WINDOW_HEIGHT)))
     v = 1500
     flag = True
     c = 0
@@ -552,37 +542,94 @@ if __name__ == '__main__':
                 screen.fill((50, 50, 50))
             clicker.render(screen)
             right_menu = RightMenu()
-            points = right_menu.show(shop.items, shop.colors)
+            points = right_menu.show(shop.items, shop.colors, shop.boosters)
             if not clicker.is_paused:
                 shop_button = Button(screen, (
                     WINDOW_WIDTH / 38, WINDOW_HEIGHT / 1.14, int(WINDOW_WIDTH / 9),
                     int(WINDOW_HEIGHT / 14)), 'Магазин')
                 if shop_button.is_button_enter() and click:
                     right_menu_is_open = not right_menu_is_open
-                for elem in points:
-                    if is_button_enter((elem[0], elem[1],
-                                        elem[0] + elem[2],
-                                        elem[1] + elem[3])) and \
-                            click and clicker.money >= elem[5]:
-                        if len(elem[4].split('.')) == 1:
-                            flag, money = shop.buy(clicker.money, elem[4], shop.colors_dict)
-                            if flag:
-                                clicker.set_skin()
-                                clicker.color = elem[4]
-                                clicker.money = money
-                                shop = Shop(shop.bought)
-                        else:
-                            flag, money = shop.buy(clicker.money,
-                                                   elem[4].split('/')[-1], shop.skins)
-                            if flag:
-                                clicker.set_skin(elem[4])
-                                clicker.money = money
-                                shop = Shop(shop.bought)
+                if SKINS_SHOWING:
+                    for elem in points:
+                        if is_mouse_enter((elem[0], elem[1],
+                                           elem[0] + elem[2],
+                                           elem[1] + elem[3])) and click:
+                            if len(elem[4].split('.')) == 1:
+                                flag, money = shop.buy(clicker.money, elem[4], shop.colors_dict)
+                                if flag:
+                                    clicker.set_skin()
+                                    clicker.color = elem[4]
+                                    clicker.money = money
+                                    shop = Shop([shop.bought, shop.boosters_dict])
+                            else:
+                                flag, money = shop.buy(clicker.money,
+                                                       elem[4].split('/')[-1], shop.skins)
+                                if flag:
+                                    clicker.set_skin(elem[4])
+                                    clicker.money = money
+                                    shop = Shop([shop.bought, shop.boosters_dict])
+                if not SKINS_SHOWING:
+                    for elem in points:
+                        if is_mouse_enter((elem[0], elem[1],
+                                           elem[0] + elem[2],
+                                           elem[1] + elem[3])) and click\
+                                and clicker.money >= elem[-1]:
+                            if elem[4] == 'Skins/clicks_per_click_x1.png':
+                                shop.boosters_dict['clicks_per_click_x1.png'] = min(int(
+                                    elem[-1] * 1.3), 999999999999)
+                                clicker.money -= elem[-1]
+                                clicker.click += 1
+                            if elem[4] == 'Skins/clicks_per_click_x10.png':
+                                shop.boosters_dict['clicks_per_click_x10.png'] = min(int(
+                                    elem[-1] * 1.3), 999999999999999)
+                                clicker.money -= elem[-1]
+                                clicker.click += 10
+                            if elem[4] == 'Skins/clicks_per_click_x100.png':
+                                shop.boosters_dict['clicks_per_click_x100.png'] = min(int(
+                                    elem[-1] * 1.5), 999999999999999)
+                                clicker.money -= elem[-1]
+                                clicker.click += 100
+                            if elem[4] == 'Skins/clicks_per_second_x0.01.png':
+                                shop.boosters_dict['clicks_per_second_x0.01.png'] = min(int(
+                                    elem[-1] * 1.1 + 1), 999999999999999)
+                                clicker.money -= elem[-1]
+                                clicker.cps += 0.01
+                            if elem[4] == 'Skins/clicks_per_second_x0.1.png':
+                                shop.boosters_dict['clicks_per_second_x0.1.png'] = min(int(
+                                    elem[-1] * 1.2), 999999999999999)
+                                clicker.money -= elem[-1]
+                                clicker.cps += 0.1
+                            if elem[4] == 'Skins/clicks_per_second_x0.5.png':
+                                shop.boosters_dict['clicks_per_second_x0.5.png'] = min(int(
+                                    elem[-1] * 1.25), 999999999999999)
+                                clicker.money -= elem[-1]
+                                clicker.cps += 0.5
+                            if elem[4] == 'Skins/clicks_per_second_x5.png':
+                                shop.boosters_dict['clicks_per_second_x5.png'] = min(int(
+                                    elem[-1] * 1.25), 999999999999999)
+                                clicker.money -= elem[-1]
+                                clicker.cps += 5
+                            if elem[4] == 'Skins/clicks_per_second_x10.png':
+                                shop.boosters_dict['clicks_per_second_x10.png'] = min(int(
+                                    elem[-1] * 1.3), 999999999999999)
+                                clicker.money -= elem[-1]
+                                clicker.cps += 10
+                            if elem[4] == 'Skins/clicks_per_second_x100.png':
+                                shop.boosters_dict['clicks_per_second_x100.png'] = min(int(
+                                    elem[-1] * 1.4), 999999999999999)
+                                clicker.money -= elem[-1]
+                                clicker.cps += 100
+                            shop = Shop([shop.bought, shop.boosters_dict])
             if clicker.is_paused:
                 if take_pause:
                     screen.blit(pause.render(), (0, 0))
                 else:
                     screen.blit(pause.render(), (0, 0))
+                right_menu_is_open = False
+            if right_menu.skins_button.is_button_enter() and click:
+                SKINS_SHOWING = True
+            if right_menu.boosters_button.is_button_enter() and click:
+                SKINS_SHOWING = False
             if SETTINGS_IS_SHOWING:
                 settings = Settings()
             if right_menu_is_open:
@@ -599,7 +646,7 @@ if __name__ == '__main__':
     clicker.is_paused = False
     # dbSaver.upload('data/save_data_1.db', clicker.to_save_info())
     with open('data/shop.json', 'w') as file:
-        json.dump(shop.bought, file)
+        json.dump([shop.bought, shop.boosters_dict], file)
     with open('data/clicker.json', 'w') as file:
         json.dump(clicker.to_save_info(), file)
     pygame.quit()
