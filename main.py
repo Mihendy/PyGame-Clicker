@@ -1,21 +1,24 @@
 import pygame
 import json
 
+# =========Эта часть кода определяет размер окна пользователя============
 pygame.init()
 WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = pygame.display.Info().current_w, \
                                             pygame.display.Info().current_h
-print(pygame.display.Info().current_w, pygame.display.Info().current_h)
+# print(pygame.display.Info().current_w, pygame.display.Info().current_h)
 # Игорейсовский компец 1366 768
-
 SURFACE = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
 pygame.quit()
-COLORS = ((42, 82, 190), (0, 0, 0), (255, 255, 255))
+# =========Эта часть кода определяет размер окна пользователя============
+
+
+COLORS = ((42, 82, 190), (0, 0, 0), (255, 255, 255))  # константа цветов (имеет смысл сделать
+# словарь-константу, в который будут записываться все цвета с объектом, к которому присвоить цвет)
 TIMER_EVENT = pygame.USEREVENT + 1
 AUTO_CLICK_EVENT = pygame.USEREVENT + 2
 SKINS_SHOWING = True
 RIGHT_MENU_IS_SHOWING = False
 image2 = False
-IS_DARK_MODE = False
 SETTINGS_IS_SHOWING = False
 
 
@@ -439,6 +442,54 @@ class ColorCell(ItemCell):
         pygame.draw.rect(screen, (150, 150, 150), (x, y, width, width), 3)
 
 
+def buy_booster():
+    if elem[4] == 'Skins/clicks_per_click_x1.png':
+        shop.boosters_dict['clicks_per_click_x1.png'] = min(int(
+            elem[-1] * 1.3), 9999999999999)
+        clicker.money -= elem[-1]
+        clicker.click += 1
+    if elem[4] == 'Skins/clicks_per_click_x10.png':
+        shop.boosters_dict['clicks_per_click_x10.png'] = min(int(
+            elem[-1] * 1.3), 9999999999999)
+        clicker.money -= elem[-1]
+        clicker.click += 10
+    if elem[4] == 'Skins/clicks_per_click_x100.png':
+        shop.boosters_dict['clicks_per_click_x100.png'] = min(int(
+            elem[-1] * 1.5), 9999999999999)
+        clicker.money -= elem[-1]
+        clicker.click += 100
+    if elem[4] == 'Skins/clicks_per_second_x0.01.png':
+        shop.boosters_dict['clicks_per_second_x0.01.png'] = min(int(
+            elem[-1] * 1.1 + 1), 9999999999999)
+        clicker.money -= elem[-1]
+        clicker.cps += 0.01
+    if elem[4] == 'Skins/clicks_per_second_x0.1.png':
+        shop.boosters_dict['clicks_per_second_x0.1.png'] = min(int(
+            elem[-1] * 1.2), 9999999999999)
+        clicker.money -= elem[-1]
+        clicker.cps += 0.1
+    if elem[4] == 'Skins/clicks_per_second_x0.5.png':
+        shop.boosters_dict['clicks_per_second_x0.5.png'] = min(int(
+            elem[-1] * 1.25), 9999999999999)
+        clicker.money -= elem[-1]
+        clicker.cps += 0.5
+    if elem[4] == 'Skins/clicks_per_second_x5.png':
+        shop.boosters_dict['clicks_per_second_x5.png'] = min(int(
+            elem[-1] * 1.25), 9999999999999)
+        clicker.money -= elem[-1]
+        clicker.cps += 5
+    if elem[4] == 'Skins/clicks_per_second_x10.png':
+        shop.boosters_dict['clicks_per_second_x10.png'] = min(int(
+            elem[-1] * 1.3), 9999999999999)
+        clicker.money -= elem[-1]
+        clicker.cps += 10
+    if elem[4] == 'Skins/clicks_per_second_x100.png':
+        shop.boosters_dict['clicks_per_second_x100.png'] = min(int(
+            elem[-1] * 1.4), 9999999999999)
+        clicker.money -= elem[-1]
+        clicker.cps += 100
+
+
 if __name__ == '__main__':
     pygame.init()
     pygame.mouse.set_visible(False)
@@ -572,53 +623,9 @@ if __name__ == '__main__':
                     for elem in points:
                         if is_mouse_enter((elem[0], elem[1],
                                            elem[0] + elem[2],
-                                           elem[1] + elem[3])) and click\
+                                           elem[1] + elem[3])) and click \
                                 and clicker.money >= elem[-1]:
-                            if elem[4] == 'Skins/clicks_per_click_x1.png':
-                                shop.boosters_dict['clicks_per_click_x1.png'] = min(int(
-                                    elem[-1] * 1.3), 999999999999)
-                                clicker.money -= elem[-1]
-                                clicker.click += 1
-                            if elem[4] == 'Skins/clicks_per_click_x10.png':
-                                shop.boosters_dict['clicks_per_click_x10.png'] = min(int(
-                                    elem[-1] * 1.3), 999999999999999)
-                                clicker.money -= elem[-1]
-                                clicker.click += 10
-                            if elem[4] == 'Skins/clicks_per_click_x100.png':
-                                shop.boosters_dict['clicks_per_click_x100.png'] = min(int(
-                                    elem[-1] * 1.5), 999999999999999)
-                                clicker.money -= elem[-1]
-                                clicker.click += 100
-                            if elem[4] == 'Skins/clicks_per_second_x0.01.png':
-                                shop.boosters_dict['clicks_per_second_x0.01.png'] = min(int(
-                                    elem[-1] * 1.1 + 1), 999999999999999)
-                                clicker.money -= elem[-1]
-                                clicker.cps += 0.01
-                            if elem[4] == 'Skins/clicks_per_second_x0.1.png':
-                                shop.boosters_dict['clicks_per_second_x0.1.png'] = min(int(
-                                    elem[-1] * 1.2), 999999999999999)
-                                clicker.money -= elem[-1]
-                                clicker.cps += 0.1
-                            if elem[4] == 'Skins/clicks_per_second_x0.5.png':
-                                shop.boosters_dict['clicks_per_second_x0.5.png'] = min(int(
-                                    elem[-1] * 1.25), 999999999999999)
-                                clicker.money -= elem[-1]
-                                clicker.cps += 0.5
-                            if elem[4] == 'Skins/clicks_per_second_x5.png':
-                                shop.boosters_dict['clicks_per_second_x5.png'] = min(int(
-                                    elem[-1] * 1.25), 999999999999999)
-                                clicker.money -= elem[-1]
-                                clicker.cps += 5
-                            if elem[4] == 'Skins/clicks_per_second_x10.png':
-                                shop.boosters_dict['clicks_per_second_x10.png'] = min(int(
-                                    elem[-1] * 1.3), 999999999999999)
-                                clicker.money -= elem[-1]
-                                clicker.cps += 10
-                            if elem[4] == 'Skins/clicks_per_second_x100.png':
-                                shop.boosters_dict['clicks_per_second_x100.png'] = min(int(
-                                    elem[-1] * 1.4), 999999999999999)
-                                clicker.money -= elem[-1]
-                                clicker.cps += 100
+                            buy_booster()
                             shop = Shop([shop.bought, shop.boosters_dict])
             if clicker.is_paused:
                 if take_pause:
