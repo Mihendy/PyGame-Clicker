@@ -1,5 +1,6 @@
 import pygame
 import json
+import os
 
 # =========Эта часть кода определяет размер окна пользователя============
 pygame.init()
@@ -12,21 +13,18 @@ pygame.quit()
 
 # =========Эта часть кода определяет константы, необходимые для работы программы============
 COLORS = {
-    'blue': (42, 82, 190),  # Цвет заполнения заднего фона элементов интерфейса (кнопки).
+    'blue azure': (42, 82, 190),  # Цвет заполнения заднего фона элементов интерфейса (кнопки).
     'black': (0, 0, 0),  # Цвет border элементов интерфейса.
-    'white': (255, 255, 255)  # Цвет шрифта.
+    'white-white': (200, 200, 200),  # Цвет шрифта.
+    'yellow-yellow': (200, 200, 0),  # Цвет шрифта.
+    'dark gray': (20, 20, 20)  # Цвет магазина.
 }
-# константа цветов (имеет смысл сделать
-# словарь-константу, в который будут записываться все цвета с объектом, к которому присвоить цвет)
 TIMER_EVENT = pygame.USEREVENT + 1
 AUTO_CLICK_EVENT = pygame.USEREVENT + 2
-# IS_DARK_MODE = False
+TIMER_EVENT_DELAY = 75
+AUTO_CLICK_DELAY = 1000
 SKINS_SHOWING = True
-RIGHT_MENU_IS_SHOWING = False
-image2 = False
-
-
-# SETTINGS_IS_SHOWING = False
+cursor_clicked = False
 # =========Эта часть кода определяет константы, необходимые для работы программы============
 
 
@@ -39,7 +37,7 @@ def is_mouse_enter(button_pos):
 
 
 def to_fixed(num_obj, digits=0):
-    """ Форматирование данных """
+    """ Функция ограничения знаков после запятой у float"""
     return f"{num_obj:.{digits}f}"
 
 
@@ -52,21 +50,19 @@ class Clicker:
             self.score = 0
             self.money = 100.0
             self.click = 1
-            self.cps = 0.5  # клики в секунду (clicks per second)
+            self.cps = 0.0  # клики в секунду (clicks per second)
             self.skin_path = None
             self.color = 'red'
         else:
             self.is_paused, self.score, self.money, self.click, \
             self.cps, self.skin_path, self.color = values
         self.money = float(self.money)
-        # self.min_radius, self.max_radius, self.radius - это значения
-        # для размеров скелета кликера.
+        # self.min_radius, self.max_radius, self.radius - это значения для размеров скелета кликера.
         self.font_size = WINDOW_HEIGHT // 26
         self.min_radius = min(WINDOW_WIDTH, WINDOW_HEIGHT) // 10
         self.max_radius = min(WINDOW_WIDTH, WINDOW_HEIGHT) // 5
         self.radius = self.min_radius
         self.centre = (WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2)
-        self.delay = 75
         # self.min_skin_size, self.max_skin_size, self.skin_size - это
         # аналоги значений скелета кликера, но уже для скина.
         self.skin_copy = None
@@ -74,21 +70,19 @@ class Clicker:
         self.min_skin_size = (self.min_radius * 2, self.min_radius * 2)
         self.max_skin_size = (self.max_radius * 2, self.max_radius * 2)
         self.skin_size = (self.radius * 2, self.radius * 2)
-        pygame.time.set_timer(TIMER_EVENT, self.delay)
-        pygame.time.set_timer(AUTO_CLICK_EVENT, 1000)
 
     def render(self, screen):
         """ Вывод результата вычислений на экран"""
         # 1)=============КЛИКИ==============
         font = pygame.font.Font("Fonts/beer money.ttf", self.font_size)
-        font_color = (200, 200, 200)
+        font_color = COLORS['white-white']
         text = font.render(f'Клики: {int(self.score)}', True, font_color)
         screen.blit(text, (40, WINDOW_HEIGHT // 20))
         # ==================================
 
         # 2)=============МОНЕТЫ=============
         font = pygame.font.Font("Fonts/beer money.ttf", self.font_size)
-        font_color = (200, 200, 0)
+        font_color = COLORS['yellow-yellow']
         text = font.render(f'Монеты: {int(self.money)}', True, font_color)
         screen.blit(text, (40, WINDOW_HEIGHT // 20 * 2))
         # ==================================
@@ -109,7 +103,7 @@ class Clicker:
         # 4)========КЛИКИ В СЕКУНДУ=========
         if self.cps:
             font = pygame.font.Font("Fonts/beer money.ttf", self.font_size)
-            font_color = (200, 200, 200)
+            font_color = COLORS['white-white']
             text = font.render(f'Клики в секунду: {to_fixed(self.cps, 2)}', True,
                                font_color)
             screen.blit(text, (40, WINDOW_HEIGHT // 20 * 3))
@@ -138,24 +132,30 @@ class Clicker:
     def switch_pause(self):
         """Включает/выключает паузу (подробнее в классе Pause)"""
         self.is_paused = not self.is_paused
-        pygame.time.set_timer(TIMER_EVENT, self.delay if not self.is_paused else 0)
-        pygame.time.set_timer(AUTO_CLICK_EVENT, 1000 if not self.is_paused else 0)
+        pygame.time.set_timer(TIMER_EVENT, TIMER_EVENT_DELAY if not self.is_paused else 0)
+        pygame.time.set_timer(AUTO_CLICK_EVENT, AUTO_CLICK_DELAY if not self.is_paused else 0)
 
     def add(self):
+        """Добавляет деньги и клики (в игровом цикле сработает,
+                если нажать ЛКМ в круге)"""
         self.score += self.click
         self.money += self.click / 5
 
     def auto_add(self):
+        """Добавляет деньги и клики каждую секунду без участья игрока
+                (в игровом цикле сработает,если выйдет таймер)"""
         self.score += self.cps
         self.money += (self.cps / 5)
 
     def set_skin(self, skin=None):
+        """Метод меняет скин кликера"""
         self.skin_path = skin
         self.skin = None
         self.skin_copy = None
 
     def to_save_info(self):
-        """Метод этого класса вернёт список с информацией о данном классе (нужна для работы с БД)"""
+        """Метод этого класса вернёт список с информацией о данном классе
+                (нужен для работы с сохранениями)"""
         return [self.is_paused, self.score, to_fixed(self.money, 3), self.click, self.cps,
                 self.skin_path, self.color]
 
@@ -173,15 +173,14 @@ class Button:
         self.x, self.y, self.width, self.height = position
         self.form = form
         self.alpha = 255
-        self.active_clr = (COLORS['blue'][0], COLORS['blue'][1], COLORS['blue'][2], self.alpha)
-        self.font_color = (255, 255, 255)
+        self.active_clr = (*COLORS['blue azure'], self.alpha)
+        self.font_color = COLORS['white-white']
         self.font_size = WINDOW_WIDTH // (WINDOW_WIDTH // 24)
         self.border_color = COLORS['black']
         self.pause_button_size = WINDOW_WIDTH // 3, WINDOW_HEIGHT // 13.32
         self.coeff_x, self.coeff_y = 0, 0
 
         self.install_event_filter()
-
         pygame.draw.rect(self.form,
                          self.active_clr,
                          (self.x + self.width // (self.width // 3),
@@ -203,7 +202,7 @@ class Button:
                                 self.y + ((self.height - self.text.get_height()) // 2)))
 
     def is_button_enter(self):
-        """Функция проверяет наличие над кнопкой курсора"""
+        """Метод проверяет наличие над кнопкой курсора"""
         x1, y1, x2, y2 = self.x, self.y, self.x + self.width, self.y + self.height
         if x in range(int(x1), int(x2)) and y in range(int(y1), int(y2)):
             return True
@@ -222,13 +221,11 @@ class Button:
             self.height += self.coeff_y * 2
             self.font_size = self.font_size + self.coeff_x // 5
             if event.type == pygame.MOUSEBUTTONDOWN:
-                self.active_clr = (255, 255, 255, self.alpha)
-                self.font_color = (COLORS['blue'][0],
-                                   COLORS['blue'][1], COLORS['blue'][2], self.alpha)
+                self.active_clr = (*COLORS['white-white'], self.alpha)
+                self.font_color = (*COLORS['blue azure'], self.alpha)
             if event.type == pygame.MOUSEMOTION or event.type == pygame.MOUSEBUTTONUP:
-                self.font_color = (255, 255, 255)
-                self.active_clr = (COLORS['blue'][0],
-                                   COLORS['blue'][1], COLORS['blue'][2], self.alpha)
+                self.font_color = COLORS['white-white']
+                self.active_clr = (*COLORS['blue azure'], self.alpha)
 
 
 # class Settings:
@@ -269,6 +266,7 @@ class Button:
 
 class Pause:
     """ Класс окна паузы игры """
+
     def __init__(self):
         self.active_clr = (61, 0, 153, 10)
         self.font_size = WINDOW_WIDTH // (WINDOW_WIDTH // 24)
@@ -309,9 +307,9 @@ class Pause:
 
 class RightMenu:
     """Класс тела магазина предметов"""
+
     def __init__(self):
-        # self.width, self.height = WINDOW_WIDTH // 3, WINDOW_HEIGHT - WINDOW_HEIGHT // 22
-        self.color = (20, 20, 20)
+        self.color = COLORS['dark gray']
         self.pos = (WINDOW_WIDTH - WINDOW_WIDTH // 3, WINDOW_HEIGHT // (WINDOW_HEIGHT // 25))
         self.button_pos = self.pos[:]
 
@@ -322,10 +320,11 @@ class RightMenu:
                             (int(WINDOW_WIDTH / 1.5 - A), WINDOW_HEIGHT)]
         # =============Координаты основного тела магазина==============
 
-        pygame.draw.polygon(screen, self.color, self.main_points, width=0) # Отрисовка тела магазина
+        pygame.draw.polygon(screen, self.color, self.main_points,
+                            width=0)  # Отрисовка тела магазина
 
         # =============Отрисовка приятной полоски сверху магазина==============
-        pygame.draw.rect(screen, COLORS['white'],
+        pygame.draw.rect(screen, COLORS['white-white'],
                          (0 - A * 5, 0, WINDOW_WIDTH * 1.5, WINDOW_HEIGHT * 0.032))
         # =============Отрисовка приятной полоски сверху магазина==============
 
@@ -378,6 +377,8 @@ class RightMenu:
 
 class Shop:
     """Класс прилавка с товарами (предметами) которые можно приобрести в магазине"""
+    # в словариках будут находится предметы, которые можно купить
+
     def __init__(self, info=None):
         self.skins = {"blue_neon.png": 3500,
                       'earth.png': 5000,
@@ -409,7 +410,7 @@ class Shop:
                                   'clicks_per_second_x10.png': 15000,
                                   'clicks_per_second_x100.png': 500000,
                                   }
-
+        # распределение предметов
         self.items = []
         for k, v in self.skins.items():
             self.items.append(ItemCell(v, k, self.is_bought(k)))
@@ -421,6 +422,7 @@ class Shop:
             self.boosters.append(ItemCell(v, k, False))
 
     def buy(self, money, obj, category):
+        """Важнейший метод магазина, все транзакции проходят здесь :D"""
         if obj in self.bought:
             return True, money
         if category[obj] <= money:
@@ -429,12 +431,16 @@ class Shop:
         return False, money
 
     def is_bought(self, name):
+        """Метод, проверяющий товар на то, что он уже куплен игроком"""
         return name in self.bought
 
 
 class ItemCell:
     """ Класс ячейки товара (предмета) """
+
     def __init__(self, price, ico_name, is_bought):
+        """В конструкторе этого класса передаются все необходимые значения для
+         дальнейшей работы магазина (цена, товар, купален_или_нет)"""
         self.price, self.ico, self.is_bought, self.ico_name = price, pygame.image.load(
             f'Skins/{ico_name}'), is_bought, f'Skins/{ico_name}'
 
@@ -453,7 +459,8 @@ class ItemCell:
         pygame.draw.rect(screen, (150, 150, 150), (x, y, width, width), 3)
 
 
-class ColorCell(ItemCell):
+class ColorCell:
+    """ 'Потомак' предыдущего класса: похож по структуре, но они имеют мало общего"""
     def __init__(self, price, color, is_bought):
         self.price, self.color, self.is_bought = price, color, is_bought
 
@@ -472,7 +479,7 @@ class ColorCell(ItemCell):
 
 
 def buy_booster():
-    """ Совершение покупки товара в магазине """
+    """ Совершение покупки ускорителя в магазине """
     if elem[4] == 'Skins/clicks_per_click_x1.png':
         shop.boosters_dict['clicks_per_click_x1.png'] = min(int(
             elem[-1] * 1.3), 9999999999999)
@@ -528,6 +535,9 @@ if __name__ == '__main__':  # Запуск игры.
     screen = pygame.display.set_mode(WINDOW_SIZE)
     pygame.display.set_caption('Clicker')
 
+    if not os.path.exists('data'):
+        os.mkdir("data")
+
     try:
         with open('data/clicker.json') as file:
             data = json.load(file)
@@ -550,41 +560,25 @@ if __name__ == '__main__':  # Запуск игры.
     running = True
     right_menu_is_open = False
 
-    image2 = False
+    cursor_clicked = False
 
     take_pause = False
     x, y = 0, 0
     # image = pygame.image.load("Skins\cursor_green.png")
-    image = pygame.image.load('Skins\cursor_blue.png')
+    cursor = pygame.image.load('Skins\cursor_blue.png')
     # image = pygame.image.load('Skins\cursor_blood.png')
     clock = pygame.time.Clock()
-    intro = True
+    start = True
     v = 1500
     flag = True
     c = 0
 
     # Игровой цикл:
     while running:
-        if intro:
-            # screen.fill((0, 0, 0))
-            #
-            # intro_image.set_alpha(a)
-            # if flag:
-            #     a += v * clock.tick() / 1000
-            # else:
-            #     a -= v * clock.tick() / 1000
-            # screen.blit(intro_image, ((WINDOW_WIDTH - min(WINDOW_WIDTH, WINDOW_HEIGHT)) // 2,
-            #                           (WINDOW_HEIGHT - min(WINDOW_WIDTH, WINDOW_HEIGHT)) // 2))
-            # pygame.display.flip()
-            # for event in pygame.event.get():
-            #     if event.type == pygame.QUIT:
-            #         exit()
-            # if a > 160 or a < 0:
-            #     flag = not flag
-            #     c += 1
-            # if c >= 2:
-            #     intro = not intro
-            intro = not intro
+        if start:
+            pygame.time.set_timer(TIMER_EVENT, TIMER_EVENT_DELAY)
+            pygame.time.set_timer(AUTO_CLICK_EVENT, AUTO_CLICK_DELAY)
+            start = not start
         else:
             MONEY = clicker.money
             click = False
@@ -597,14 +591,12 @@ if __name__ == '__main__':  # Запуск игры.
                     if clicker.is_paused:
                         take_pause = True
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    image2 = pygame.image.load("Skins\click_effect.png")
+                    cursor_clicked = pygame.image.load("Skins\click_effect.png")
                     click = True
                 if event.type == pygame.MOUSEBUTTONUP:
-                    # image = pygame.image.load("Skins\cursor_green.png")
-                    image = pygame.image.load("Skins\cursor_blue.png")
-                    # image = pygame.image.load('Skins\cursor_blood.png')
+                    cursor = pygame.image.load("Skins\cursor_blue.png")
 
-                    image2 = False
+                    cursor_clicked = False
                 if clicker.is_paused:
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_p:
@@ -626,6 +618,7 @@ if __name__ == '__main__':  # Запуск игры.
             right_menu = RightMenu()
             points = right_menu.show_animation(shop.items, shop.colors, shop.boosters)
             if not clicker.is_paused:
+                # если игра не на паузе, то
                 shop_button = Button(screen, (
                     WINDOW_WIDTH / 38, WINDOW_HEIGHT / 1.14, int(WINDOW_WIDTH / 9),
                     int(WINDOW_HEIGHT / 14)), 'Магазин')
@@ -635,7 +628,12 @@ if __name__ == '__main__':  # Запуск игры.
                 if shop_button.is_button_enter() and click:
                     right_menu_is_open = not right_menu_is_open
                 if pause_button.is_button_enter() and click:
-                    clicker.is_paused = not clicker.is_paused
+                    clicker.switch_pause()
+                #  проверка на взаимодействия с магазином
+                if right_menu.skins_button.is_button_enter() and click:
+                    SKINS_SHOWING = True
+                if right_menu.boosters_button.is_button_enter() and click:
+                    SKINS_SHOWING = False
                 if SKINS_SHOWING:
                     for elem in points:
                         if is_mouse_enter((elem[0], elem[1],
@@ -663,30 +661,28 @@ if __name__ == '__main__':  # Запуск игры.
                                 and clicker.money >= elem[-1]:
                             buy_booster()
                             shop = Shop([shop.bought, shop.boosters_dict])
+            #  пауза
             if clicker.is_paused:
                 if take_pause:
                     screen.blit(pause.render(), (0, 0))
                 else:
                     screen.blit(pause.render(), (0, 0))
                 right_menu_is_open = False
-            if right_menu.skins_button.is_button_enter() and click:
-                SKINS_SHOWING = True
-            if right_menu.boosters_button.is_button_enter() and click:
-                SKINS_SHOWING = False
             # if SETTINGS_IS_SHOWING:
             #     settings = Settings()
             if right_menu_is_open:
                 A = min(A + v * clock.tick() / 1000, 0)
             else:
                 A = max(A - v * clock.tick() / 1000, -WINDOW_WIDTH // 2)
-            if image:
-                image = pygame.transform.scale(image, (WINDOW_WIDTH // (WINDOW_WIDTH // 45),
-                                                       WINDOW_WIDTH // (WINDOW_WIDTH // 35)))
-                screen.blit(image, (x - WINDOW_WIDTH // 26 // 3, y - WINDOW_HEIGHT // 20 // 3))
-            if image2:
-                image2 = pygame.transform.scale(image2, (WINDOW_WIDTH // (WINDOW_WIDTH // 45),
+            if cursor:
+                cursor = pygame.transform.scale(cursor, (WINDOW_WIDTH // (WINDOW_WIDTH // 45),
                                                          WINDOW_WIDTH // (WINDOW_WIDTH // 35)))
-                screen.blit(image2, (x - WINDOW_WIDTH // 26 // 3, y - WINDOW_HEIGHT // 20 // 3))
+                screen.blit(cursor, (x - WINDOW_WIDTH // 26 // 3, y - WINDOW_HEIGHT // 20 // 3))
+            if cursor_clicked:
+                cursor_clicked =\
+                    pygame.transform.scale(cursor_clicked, (WINDOW_WIDTH // (WINDOW_WIDTH // 45),
+                                                            WINDOW_WIDTH // (WINDOW_WIDTH // 35)))
+                screen.blit(cursor_clicked, (x - WINDOW_WIDTH // 26 // 3, y - WINDOW_HEIGHT // 60))
             pygame.display.flip()
     clicker.is_paused = False
     # dbSaver.upload('data/save_data_1.db', clicker.to_save_info())
