@@ -25,6 +25,8 @@ TIMER_EVENT_DELAY = 75
 AUTO_CLICK_DELAY = 1000
 SKINS_SHOWING = True
 cursor_clicked = False
+
+
 # =========Эта часть кода определяет константы, необходимые для работы программы============
 
 
@@ -223,45 +225,55 @@ class Button:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 self.active_clr = (*COLORS['white-white'], self.alpha)
                 self.font_color = (*COLORS['blue azure'], self.alpha)
-            if event.type == pygame.MOUSEMOTION or event.type == pygame.MOUSEBUTTONUP:
+            if event.type == pygame.MOUSEMOTION or event.type == pygame.MOUSEBUTTONDOWN:
                 self.font_color = COLORS['white-white']
                 self.active_clr = (*COLORS['blue azure'], self.alpha)
 
 
-# class Settings:
-#     def __init__(self):
-#         global clock, IS_DARK_MODE, COLORS
-#         self.alpha = 255
-#         pygame.draw.rect(screen, COLORS[1], (WINDOW_WIDTH // (WINDOW_WIDTH // 100),
-#                                              int(WINDOW_HEIGHT * 0.130),
-#                                              WINDOW_WIDTH // (WINDOW_WIDTH // 1000),
-#                                              int(WINDOW_HEIGHT * 0.651)),
-#                          width=WINDOW_HEIGHT // (WINDOW_HEIGHT // 15),
-#                          border_radius=WINDOW_HEIGHT // (WINDOW_HEIGHT // 15))
-#         pygame.draw.rect(screen, COLORS[0], (WINDOW_WIDTH // (WINDOW_WIDTH // 100),
-#                                              int(WINDOW_HEIGHT * 0.130),
-#                                              WINDOW_WIDTH // (WINDOW_WIDTH // 1000),
-#                                              int(WINDOW_HEIGHT * 0.651)),
-#                          width=0,
-#                          border_radius=WINDOW_HEIGHT // (WINDOW_HEIGHT // 15))
-#         back_btn = Button(screen, (WINDOW_WIDTH // (WINDOW_WIDTH // 100),
-#                                    int(WINDOW_HEIGHT * 0.130),
-#                                    WINDOW_WIDTH // (WINDOW_WIDTH // 300),
-#                                    int(WINDOW_HEIGHT * 0.651)), 'Назад')
-#         if back_btn.is_button_enter() and event.type == pygame.MOUSEBUTTONDOWN:
-#             global SETTINGS_IS_SHOWING
-#             SETTINGS_IS_SHOWING = False
-#         btn_text = 'Тёмная тема' if IS_DARK_MODE else 'Cветлая тема'
-#         display_mode_btn = Button(screen, (WINDOW_WIDTH // (WINDOW_WIDTH // 400),
-#                                            int(WINDOW_HEIGHT * 0.130),
-#                                            WINDOW_WIDTH // (WINDOW_WIDTH // 300),
-#                                            int(WINDOW_HEIGHT * 0.651)), btn_text)
-#         if display_mode_btn.is_button_enter() and event.type == pygame.MOUSEBUTTONDOWN:
-#             if IS_DARK_MODE:
-#                 COLORS = ((20, 20, 20), (0, 0, 0), (200, 0, 0))
-#             else:
-#                 COLORS = ((42, 82, 190), (0, 0, 0), (255, 255, 255))
-#             IS_DARK_MODE = not IS_DARK_MODE
+class MainMenu:
+    """ Класс главного меню игры """
+
+    def __init__(self):
+        self.active_clr = (61, 0, 153, 10)
+        self.font_size = WINDOW_WIDTH // (WINDOW_WIDTH // 24)
+        self.pause_button_size = WINDOW_WIDTH // 3, WINDOW_HEIGHT // 13.32
+        self.buttons_titles = {
+            0: ('Продолжить сохранённую игру', WINDOW_HEIGHT * 0.2929),
+            1: ('Новая игра', WINDOW_HEIGHT * 0.3906),
+            2: ('Выйти из игры', WINDOW_HEIGHT * 0.4882)
+        }
+
+    def render(self):
+        """Отрисовка главного меню"""
+        font = pygame.font.Font("Fonts/beer money.ttf", self.font_size)
+        font_color = (255, 255, 255)
+        text = font.render('V 1.0', True, font_color)
+        SURFACE.fill((100, 100, 100, 100))
+        SURFACE.blit(text, (WINDOW_WIDTH // (WINDOW_WIDTH // 40),
+                            WINDOW_HEIGHT // WINDOW_HEIGHT // 120))
+        self.draw_buttons()
+        return SURFACE
+
+    def draw_buttons(self):
+        """Отрисовка кнопок главного меню и реализация остановки или продолжения работы программы"""
+        for i in range(3):
+            btn = Button(screen, (WINDOW_WIDTH // 1.8,
+                                  self.buttons_titles[i][1],
+                                  self.pause_button_size[0],
+                                  self.pause_button_size[1]), self.buttons_titles[i][0])
+            if btn.is_button_enter() and event.type == pygame.MOUSEBUTTONUP:
+
+                if i == 0:  # Кнопка продолжения игры
+                    global is_menu
+                    is_menu = False
+
+                elif i == 1:  # Кнопка начала новой игры
+                    # КОД НОВОЙ ИГРЫ #
+                    print('here')
+
+                elif i == 2:  # Кнопка выхода из игры
+                    global running
+                    running = False
 
 
 class Pause:
@@ -273,12 +285,12 @@ class Pause:
         self.pause_button_size = WINDOW_WIDTH // 3, WINDOW_HEIGHT // 13.32
         self.buttons_titles = {
             0: ('Продолжить игру', WINDOW_HEIGHT * 0.3417),
-            1: ('Настройки', WINDOW_HEIGHT * 0.455),
-            2: ('Выйти', WINDOW_HEIGHT * 0.4394)
+            1: ('Новая игра', WINDOW_HEIGHT * 0.3906),
+            2: ('В главное меню', WINDOW_HEIGHT * 0.4394)
         }
 
     def render(self):
-        """Отрисовка окна паузы"""
+        """ Отрисовка окна паузы """
         font = pygame.font.Font("Fonts/beer money.ttf", self.font_size)
         font_color = (255, 255, 255)
         text = font.render('Игра на паузе', True, font_color)
@@ -293,16 +305,19 @@ class Pause:
         for i in range(3):
             if i == 1:
                 continue
-            btn = Button(screen, (WINDOW_WIDTH // 3.3,
+
+            btn = Button(screen, (WINDOW_WIDTH // 5.3,
                                   self.buttons_titles[i][1],
                                   self.pause_button_size[0],
                                   self.pause_button_size[1]), self.buttons_titles[i][0])
             if btn.is_button_enter() and event.type == pygame.MOUSEBUTTONDOWN:
+
                 if i == 0:  # Кнопка продолжения игры
                     clicker.switch_pause()
-                elif i == 2:  # Кнопка выхода из игры
-                    global running
-                    running = False
+
+                elif i == 2:  # Кнопка выхода в главное меню игры
+                    global is_menu
+                    is_menu = True
 
 
 class RightMenu:
@@ -377,6 +392,7 @@ class RightMenu:
 
 class Shop:
     """Класс прилавка с товарами (предметами) которые можно приобрести в магазине"""
+
     # в словариках будут находится предметы, которые можно купить
 
     def __init__(self, info=None):
@@ -461,6 +477,7 @@ class ItemCell:
 
 class ColorCell:
     """ 'Потомак' предыдущего класса: похож по структуре, но они имеют мало общего"""
+
     def __init__(self, price, color, is_bought):
         self.price, self.color, self.is_bought = price, color, is_bought
 
@@ -547,6 +564,7 @@ if __name__ == '__main__':  # Запуск игры.
         clicker = Clicker()
 
     pause = Pause()
+    main_menu = MainMenu()
 
     try:
         with open('data/shop.json') as file:
@@ -562,12 +580,12 @@ if __name__ == '__main__':  # Запуск игры.
 
     cursor_clicked = False
 
-    take_pause = False
     x, y = 0, 0
     # image = pygame.image.load("Skins\cursor_green.png")
     cursor = pygame.image.load('Skins\cursor_blue.png')
     # image = pygame.image.load('Skins\cursor_blood.png')
     clock = pygame.time.Clock()
+    is_menu = False
     start = True
     v = 1500
     flag = True
@@ -587,9 +605,6 @@ if __name__ == '__main__':  # Запуск игры.
                     running = False
                 if event.type == pygame.MOUSEMOTION:
                     x, y = event.pos
-                    take_pause = False
-                    if clicker.is_paused:
-                        take_pause = True
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     cursor_clicked = pygame.image.load("Skins\click_effect.png")
                     click = True
@@ -597,11 +612,11 @@ if __name__ == '__main__':  # Запуск игры.
                     cursor = pygame.image.load("Skins\cursor_blue.png")
 
                     cursor_clicked = False
-                if clicker.is_paused:
-                    if event.type == pygame.KEYDOWN:
-                        if event.key == pygame.K_p:
-                            clicker.switch_pause()
-                            pygame.display.set_caption('Clicker')
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_p:
+                        clicker.switch_pause()
+                        pygame.display.set_caption('Clicker') if clicker.is_paused else \
+                            pygame.display.set_caption('Clicker (paused)')
                 else:
                     if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                         clicker.check_click(event.pos)
@@ -609,10 +624,10 @@ if __name__ == '__main__':  # Запуск игры.
                         clicker.lose_mass()
                     if event.type == AUTO_CLICK_EVENT:
                         clicker.auto_add()
-                    if event.type == pygame.KEYDOWN:
-                        if event.key == pygame.K_p:
-                            clicker.switch_pause()
-                            pygame.display.set_caption('Clicker (paused)')
+                    # if event.type == pygame.KEYDOWN:
+                    #     if event.key == pygame.K_p:
+                    #         clicker.switch_pause()
+                    #         pygame.display.set_caption('Clicker (paused)')
             screen.fill((50, 50, 50))
             clicker.render(screen)
             right_menu = RightMenu()
@@ -661,15 +676,14 @@ if __name__ == '__main__':  # Запуск игры.
                                 and clicker.money >= elem[-1]:
                             buy_booster()
                             shop = Shop([shop.bought, shop.boosters_dict])
-            #  пауза
+            #  отрисовка паузы
             if clicker.is_paused:
-                if take_pause:
-                    screen.blit(pause.render(), (0, 0))
-                else:
-                    screen.blit(pause.render(), (0, 0))
+                screen.blit(pause.render(), (0, 0))
                 right_menu_is_open = False
-            # if SETTINGS_IS_SHOWING:
-            #     settings = Settings()
+            if is_menu:
+                screen.fill((20, 20, 20))
+                screen.blit(main_menu.render(), (0, 0))
+
             if right_menu_is_open:
                 A = min(A + v * clock.tick() / 1000, 0)
             else:
@@ -679,7 +693,7 @@ if __name__ == '__main__':  # Запуск игры.
                                                          WINDOW_WIDTH // (WINDOW_WIDTH // 35)))
                 screen.blit(cursor, (x - WINDOW_WIDTH // 26 // 3, y - WINDOW_HEIGHT // 20 // 3))
             if cursor_clicked:
-                cursor_clicked =\
+                cursor_clicked = \
                     pygame.transform.scale(cursor_clicked, (WINDOW_WIDTH // (WINDOW_WIDTH // 45),
                                                             WINDOW_WIDTH // (WINDOW_WIDTH // 35)))
                 screen.blit(cursor_clicked, (x - WINDOW_WIDTH // 26 // 3, y - WINDOW_HEIGHT // 60))
