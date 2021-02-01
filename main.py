@@ -165,7 +165,7 @@ class Clicker:
 class Button:
     """Класс кнопки"""
 
-    def __init__(self, form, position, text=''):
+    def __init__(self, form, position, text='', flag=True):
         """Инициализация и отрисовка кнопки на форме"""
         # +++ О аргументах, передаваемых в "__init__" +++
         # self, форма на которой рисуется кнопка, координаты верхней левой и правой нижней точек
@@ -182,7 +182,7 @@ class Button:
         self.pause_button_size = WINDOW_WIDTH // 3, WINDOW_HEIGHT // 13.32
         self.coeff_x, self.coeff_y = 0, 0
 
-        self.install_event_filter()
+        self.install_event_filter(flag)
         pygame.draw.rect(self.form,
                          self.active_clr,
                          (self.x + self.width // (self.width // 3),
@@ -210,11 +210,11 @@ class Button:
             return True
         return False
 
-    def install_event_filter(self):
+    def install_event_filter(self, flag):
         """EventFilter, в котором происходит обработка событий
         (Кастомизация кнопки при нажатии и наведении.)"""
         global x, y
-        if self.is_button_enter():
+        if self.is_button_enter() and flag:
             self.coeff_x = WINDOW_WIDTH // (WINDOW_WIDTH // 25)
             self.coeff_y = WINDOW_WIDTH // (WINDOW_WIDTH // 10)
             self.x -= self.coeff_x
@@ -249,15 +249,15 @@ class MainMenu:
         font_color = (255, 255, 255)
         text = font.render('V 1.0', True, font_color)
         SURFACE.fill((100, 100, 100, 100))
-        SURFACE.blit(text, (WINDOW_WIDTH // (WINDOW_WIDTH // 40),
-                            WINDOW_HEIGHT // WINDOW_HEIGHT // 120))
+        SURFACE.blit(text, (WINDOW_WIDTH - text.get_width(),
+                            WINDOW_HEIGHT - text.get_height()))
         self.draw_buttons()
         return SURFACE
 
     def draw_buttons(self):
         """Отрисовка кнопок главного меню и реализация остановки или продолжения работы программы"""
         for i in range(3):
-            btn = Button(screen, (WINDOW_WIDTH // 1.8,
+            btn = Button(screen, ((WINDOW_WIDTH - self.pause_button_size[0]) // 2,
                                   self.buttons_titles[i][1],
                                   self.pause_button_size[0],
                                   self.pause_button_size[1]), self.buttons_titles[i][0])
@@ -268,8 +268,9 @@ class MainMenu:
                     is_menu = False
 
                 elif i == 1:  # Кнопка начала новой игры
-                    # КОД НОВОЙ ИГРЫ #
-                    print('here')
+                    global new_game
+                    new_game = True
+                    is_menu = False
 
                 elif i == 2:  # Кнопка выхода из игры
                     global running
@@ -284,9 +285,12 @@ class Pause:
         self.font_size = WINDOW_WIDTH // (WINDOW_WIDTH // 24)
         self.pause_button_size = WINDOW_WIDTH // 3, WINDOW_HEIGHT // 13.32
         self.buttons_titles = {
-            0: ('Продолжить игру', WINDOW_HEIGHT * 0.3417),
-            1: ('Новая игра', WINDOW_HEIGHT * 0.3906),
-            2: ('В главное меню', WINDOW_HEIGHT * 0.4394)
+            0: ((WINDOW_WIDTH / 38, WINDOW_HEIGHT / 1.3 - int(WINDOW_WIDTH / 20),
+                 int(WINDOW_WIDTH / 9), int(WINDOW_HEIGHT / 14)), 'В главное меню'),
+            1: ((WINDOW_WIDTH / 38, WINDOW_HEIGHT / 1.3 - int(WINDOW_WIDTH / 20) * 2,
+                 int(WINDOW_WIDTH / 9), int(WINDOW_HEIGHT / 14)), 'Язык: русский', False)
+            # 1: ('Новая игра', WINDOW_HEIGHT * 0.3906),
+            # 2: ('В главное меню', WINDOW_HEIGHT * 0.4394)
         }
 
     def render(self):
@@ -302,20 +306,14 @@ class Pause:
 
     def draw_buttons(self):
         """Отрисовка кнопок в меню паузы и реализация остановки или продолжения работы программы"""
-        for i in range(3):
-            if i == 1:
-                continue
-
-            btn = Button(screen, (WINDOW_WIDTH // 5.3,
-                                  self.buttons_titles[i][1],
-                                  self.pause_button_size[0],
-                                  self.pause_button_size[1]), self.buttons_titles[i][0])
+        for i in range(len(self.buttons_titles)):
+            btn = Button(screen, *self.buttons_titles[i])
             if btn.is_button_enter() and event.type == pygame.MOUSEBUTTONDOWN:
 
-                if i == 0:  # Кнопка продолжения игры
-                    clicker.switch_pause()
+                # if i == 0:  # Кнопка продолжения игры
+                #     clicker.switch_pause()
 
-                elif i == 2:  # Кнопка выхода в главное меню игры
+                if i == 0:  # Кнопка выхода в главное меню игры
                     global is_menu
                     is_menu = True
 
@@ -551,6 +549,7 @@ if __name__ == '__main__':  # Запуск игры.
     pygame.mouse.set_visible(False)
     screen = pygame.display.set_mode(WINDOW_SIZE)
     pygame.display.set_caption('Clicker')
+    new_game = False
 
     if not os.path.exists('data'):
         os.mkdir("data")
@@ -561,42 +560,43 @@ if __name__ == '__main__':  # Запуск игры.
         # data = dbSaver.download('data/save_data_1.db')
         clicker = Clicker(data)
     except FileNotFoundError:
-        clicker = Clicker()
-
-    pause = Pause()
-    main_menu = MainMenu()
+        new_game = True
 
     try:
         with open('data/shop.json') as file:
             data = json.load(file)
         shop = Shop(data)
     except FileNotFoundError:
-        shop = Shop()
+        new_game = True
 
-    A = -WINDOW_WIDTH
-    print(clicker.to_save_info())
+    pause = Pause()
+    main_menu = MainMenu()
+
+    A = -WINDOW_WIDTH  # доп. переменная, отвечающая за положение магазина во время анимации
+
     running = True
     right_menu_is_open = False
-
     cursor_clicked = False
+    is_menu = True
 
     x, y = 0, 0
-    # image = pygame.image.load("Skins\cursor_green.png")
-    cursor = pygame.image.load('Skins\cursor_blue.png')
-    # image = pygame.image.load('Skins\cursor_blood.png')
+    cursor = pygame.image.load('Skins/cursor_blue.png')
     clock = pygame.time.Clock()
-    is_menu = False
-    start = True
     v = 1500
-    flag = True
     c = 0
+    pygame.time.set_timer(TIMER_EVENT, TIMER_EVENT_DELAY)
+    pygame.time.set_timer(AUTO_CLICK_EVENT, AUTO_CLICK_DELAY)
 
     # Игровой цикл:
     while running:
-        if start:
+        if new_game:
+            new_game = not new_game
+            shop = Shop()
+            clicker = Clicker()
+            pause = Pause()
+            main_menu = MainMenu()
             pygame.time.set_timer(TIMER_EVENT, TIMER_EVENT_DELAY)
             pygame.time.set_timer(AUTO_CLICK_EVENT, AUTO_CLICK_DELAY)
-            start = not start
         else:
             MONEY = clicker.money
             click = False
@@ -606,10 +606,10 @@ if __name__ == '__main__':  # Запуск игры.
                 if event.type == pygame.MOUSEMOTION:
                     x, y = event.pos
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    cursor_clicked = pygame.image.load("Skins\click_effect.png")
+                    cursor_clicked = pygame.image.load("Skins/click_effect.png")
                     click = True
                 if event.type == pygame.MOUSEBUTTONUP:
-                    cursor = pygame.image.load("Skins\cursor_blue.png")
+                    cursor = pygame.image.load("Skins/cursor_blue.png")
 
                     cursor_clicked = False
                 if event.type == pygame.KEYDOWN:
@@ -618,53 +618,47 @@ if __name__ == '__main__':  # Запуск игры.
                         pygame.display.set_caption('Clicker') if clicker.is_paused else \
                             pygame.display.set_caption('Clicker (paused)')
                 else:
-                    if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                    if event.type == pygame.MOUSEBUTTONUP and event.button == 1 and \
+                            not clicker.is_paused:
                         clicker.check_click(event.pos)
                     if event.type == TIMER_EVENT:
                         clicker.lose_mass()
                     if event.type == AUTO_CLICK_EVENT:
                         clicker.auto_add()
-                    # if event.type == pygame.KEYDOWN:
-                    #     if event.key == pygame.K_p:
-                    #         clicker.switch_pause()
-                    #         pygame.display.set_caption('Clicker (paused)')
             screen.fill((50, 50, 50))
             clicker.render(screen)
             right_menu = RightMenu()
             points = right_menu.show_animation(shop.items, shop.colors, shop.boosters)
-            if not clicker.is_paused:
-                # если игра не на паузе, то
-                shop_button = Button(screen, (
-                    WINDOW_WIDTH / 38, WINDOW_HEIGHT / 1.14, int(WINDOW_WIDTH / 9),
-                    int(WINDOW_HEIGHT / 14)), 'Магазин')
-                pause_button = Button(screen, (WINDOW_WIDTH / 38, 800,
+            if clicker.is_paused:
+                pause_button = Button(screen, (WINDOW_WIDTH / 38, WINDOW_HEIGHT / 1.3,
+                                               int(WINDOW_WIDTH / 9), int(WINDOW_HEIGHT / 14)),
+                                      'Продолжить')
+                screen.blit(pause.render(), (0, 0))
+                right_menu_is_open = False
+            else:
+                pause_button = Button(screen, (WINDOW_WIDTH / 38, WINDOW_HEIGHT / 1.3,
                                                int(WINDOW_WIDTH / 9), int(WINDOW_HEIGHT / 14)),
                                       'Пауза')
-                if shop_button.is_button_enter() and click:
-                    right_menu_is_open = not right_menu_is_open
-                if pause_button.is_button_enter() and click:
-                    clicker.switch_pause()
-                #  проверка на взаимодействия с магазином
-                if right_menu.skins_button.is_button_enter() and click:
-                    SKINS_SHOWING = True
-                if right_menu.boosters_button.is_button_enter() and click:
-                    SKINS_SHOWING = False
+                shop_button = Button(screen, (
+                    WINDOW_WIDTH / 38, WINDOW_HEIGHT / 1.3 + int(WINDOW_WIDTH / 20),
+                    int(WINDOW_WIDTH / 9), int(WINDOW_HEIGHT / 14)), 'Магазин',
+                                     not clicker.is_paused)
                 if SKINS_SHOWING:
                     for elem in points:
                         if is_mouse_enter((elem[0], elem[1],
                                            elem[0] + elem[2],
                                            elem[1] + elem[3])) and click:
                             if len(elem[4].split('.')) == 1:
-                                flag, money = shop.buy(clicker.money, elem[4], shop.colors_dict)
-                                if flag:
+                                can_buy, money = shop.buy(clicker.money, elem[4], shop.colors_dict)
+                                if can_buy:
                                     clicker.set_skin()
                                     clicker.color = elem[4]
                                     clicker.money = money
                                     shop = Shop([shop.bought, shop.boosters_dict])
                             else:
-                                flag, money = shop.buy(clicker.money,
-                                                       elem[4].split('/')[-1], shop.skins)
-                                if flag:
+                                can_buy, money = shop.buy(clicker.money,
+                                                          elem[4].split('/')[-1], shop.skins)
+                                if can_buy:
                                     clicker.set_skin(elem[4])
                                     clicker.money = money
                                     shop = Shop([shop.bought, shop.boosters_dict])
@@ -676,14 +670,17 @@ if __name__ == '__main__':  # Запуск игры.
                                 and clicker.money >= elem[-1]:
                             buy_booster()
                             shop = Shop([shop.bought, shop.boosters_dict])
-            #  отрисовка паузы
-            if clicker.is_paused:
-                screen.blit(pause.render(), (0, 0))
-                right_menu_is_open = False
+            if shop_button.is_button_enter() and click and not clicker.is_paused:
+                right_menu_is_open = not right_menu_is_open
+            if pause_button.is_button_enter() and click:
+                clicker.switch_pause()
+            if right_menu.skins_button.is_button_enter() and click:
+                SKINS_SHOWING = True
+            if right_menu.boosters_button.is_button_enter() and click:
+                SKINS_SHOWING = False
             if is_menu:
                 screen.fill((20, 20, 20))
                 screen.blit(main_menu.render(), (0, 0))
-
             if right_menu_is_open:
                 A = min(A + v * clock.tick() / 1000, 0)
             else:
