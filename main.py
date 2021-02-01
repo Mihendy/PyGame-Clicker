@@ -2,11 +2,12 @@ import pygame
 import json
 import os
 
+
 # =========Эта часть кода определяет размер окна пользователя============
 pygame.init()
 WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = pygame.display.Info().current_w, \
                                             pygame.display.Info().current_h
-print(pygame.display.Info().current_w, pygame.display.Info().current_h)
+# print(pygame.display.Info().current_w, pygame.display.Info().current_h)
 SURFACE = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
 pygame.quit()
 # =========Эта часть кода определяет размер окна пользователя============
@@ -15,10 +16,11 @@ pygame.quit()
 COLORS = {
     'blue azure': (42, 82, 190),  # Цвет заполнения заднего фона элементов интерфейса (кнопки).
     'black': (0, 0, 0),  # Цвет border элементов интерфейса.
-    'white-white': (200, 200, 200),  # Цвет шрифта.
-    'yellow-yellow': (200, 200, 0),  # Цвет шрифта.
+    'soft white': (200, 200, 200),  # Цвет шрифта.
+    'soft yellow': (200, 200, 0),  # Цвет шрифта.
     'dark gray': (20, 20, 20)  # Цвет магазина.
 }
+
 TIMER_EVENT = pygame.USEREVENT + 1
 AUTO_CLICK_EVENT = pygame.USEREVENT + 2
 TIMER_EVENT_DELAY = 75
@@ -77,14 +79,14 @@ class Clicker:
         """ Вывод результата вычислений на экран"""
         # 1)=============КЛИКИ==============
         font = pygame.font.Font("Fonts/beer money.ttf", self.font_size)
-        font_color = COLORS['white-white']
+        font_color = COLORS['soft white']
         text = font.render(f'Клики: {int(self.score)}', True, font_color)
         screen.blit(text, (40, WINDOW_HEIGHT // 20))
         # ==================================
 
         # 2)=============МОНЕТЫ=============
         font = pygame.font.Font("Fonts/beer money.ttf", self.font_size)
-        font_color = COLORS['yellow-yellow']
+        font_color = COLORS['soft yellow']
         text = font.render(f'Монеты: {int(self.money)}', True, font_color)
         screen.blit(text, (40, WINDOW_HEIGHT // 20 * 2))
         # ==================================
@@ -105,7 +107,7 @@ class Clicker:
         # 4)========КЛИКИ В СЕКУНДУ=========
         if self.cps:
             font = pygame.font.Font("Fonts/beer money.ttf", self.font_size)
-            font_color = COLORS['white-white']
+            font_color = COLORS['soft white']
             text = font.render(f'Клики в секунду: {to_fixed(self.cps, 2)}', True,
                                font_color)
             screen.blit(text, (40, WINDOW_HEIGHT // 20 * 3))
@@ -176,7 +178,7 @@ class Button:
         self.form = form
         self.alpha = 255
         self.active_clr = (*COLORS['blue azure'], self.alpha)
-        self.font_color = COLORS['white-white']
+        self.font_color = COLORS['soft white']
         self.font_size = WINDOW_WIDTH // (WINDOW_WIDTH // 24)
         self.border_color = COLORS['black']
         self.pause_button_size = WINDOW_WIDTH // 3, WINDOW_HEIGHT // 13.32
@@ -223,10 +225,10 @@ class Button:
             self.height += self.coeff_y * 2
             self.font_size = self.font_size + self.coeff_x // 5
             if event.type == pygame.MOUSEBUTTONDOWN:
-                self.active_clr = (*COLORS['white-white'], self.alpha)
+                self.active_clr = (*COLORS['soft white'], self.alpha)
                 self.font_color = (*COLORS['blue azure'], self.alpha)
             if event.type == pygame.MOUSEMOTION or event.type == pygame.MOUSEBUTTONDOWN:
-                self.font_color = COLORS['white-white']
+                self.font_color = COLORS['soft white']
                 self.active_clr = (*COLORS['blue azure'], self.alpha)
 
 
@@ -239,7 +241,7 @@ class MainMenu:
         self.pause_button_size = WINDOW_WIDTH // 3, WINDOW_HEIGHT // 13.32
         self.buttons_titles = {
             0: ('Продолжить сохранённую игру', WINDOW_HEIGHT * 0.2929),
-            1: ('Новая игра', WINDOW_HEIGHT * 0.3906),
+            1: ('Новая игра (необратимо)', WINDOW_HEIGHT * 0.3906),
             2: ('Выйти из игры', WINDOW_HEIGHT * 0.4882)
         }
 
@@ -247,10 +249,9 @@ class MainMenu:
         """Отрисовка главного меню"""
         font = pygame.font.Font("Fonts/beer money.ttf", self.font_size)
         font_color = (255, 255, 255)
-        text = font.render('V 1.0', True, font_color)
+        text = font.render('V 0.9 (One language release)', True, font_color)
         SURFACE.fill((100, 100, 100, 100))
-        SURFACE.blit(text, (WINDOW_WIDTH - text.get_width(),
-                            WINDOW_HEIGHT - text.get_height()))
+        SURFACE.blit(text, (10, WINDOW_HEIGHT - text.get_height()))
         self.draw_buttons()
         return SURFACE
 
@@ -337,7 +338,7 @@ class RightMenu:
                             width=0)  # Отрисовка тела магазина
 
         # =============Отрисовка приятной полоски сверху магазина==============
-        pygame.draw.rect(screen, COLORS['white-white'],
+        pygame.draw.rect(screen, COLORS['soft white'],
                          (0 - A * 5, 0, WINDOW_WIDTH * 1.5, WINDOW_HEIGHT * 0.032))
         # =============Отрисовка приятной полоски сверху магазина==============
 
