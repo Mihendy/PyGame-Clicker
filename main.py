@@ -1,35 +1,7 @@
 import pygame
 import json
 import os
-
-
-# =========Эта часть кода определяет размер окна пользователя============
-pygame.init()
-WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = pygame.display.Info().current_w, \
-                                            pygame.display.Info().current_h
-# print(pygame.display.Info().current_w, pygame.display.Info().current_h)
-SURFACE = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
-pygame.quit()
-# =========Эта часть кода определяет размер окна пользователя============
-
-# =========Эта часть кода определяет константы, необходимые для работы программы============
-COLORS = {
-    'blue azure': (42, 82, 190),  # Цвет заполнения заднего фона элементов интерфейса (кнопки).
-    'black': (0, 0, 0),  # Цвет border элементов интерфейса.
-    'soft white': (200, 200, 200),  # Цвет шрифта.
-    'soft yellow': (200, 200, 0),  # Цвет шрифта.
-    'dark gray': (20, 20, 20)  # Цвет магазина.
-}
-
-TIMER_EVENT = pygame.USEREVENT + 1
-AUTO_CLICK_EVENT = pygame.USEREVENT + 2
-TIMER_EVENT_DELAY = 75
-AUTO_CLICK_DELAY = 1000
-SKINS_SHOWING = True
-cursor_clicked = False
-
-
-# =========Эта часть кода определяет константы, необходимые для работы программы============
+import csv
 
 
 def is_mouse_enter(button_pos):
@@ -80,14 +52,15 @@ class Clicker:
         # 1)=============КЛИКИ==============
         font = pygame.font.Font("Fonts/beer money.ttf", self.font_size)
         font_color = COLORS['soft white']
-        text = font.render(f'Клики: {int(self.score)}', True, font_color)
+        text = font.render(f'{LANG_DATA[LANG_INDEX]["Clicks"]}: {int(self.score)}', True,
+                           font_color)
         screen.blit(text, (40, WINDOW_HEIGHT // 20))
         # ==================================
 
         # 2)=============МОНЕТЫ=============
         font = pygame.font.Font("Fonts/beer money.ttf", self.font_size)
         font_color = COLORS['soft yellow']
-        text = font.render(f'Монеты: {int(self.money)}', True, font_color)
+        text = font.render(f'{LANG_DATA[LANG_INDEX]["Money"]}: {int(self.money)}', True, font_color)
         screen.blit(text, (40, WINDOW_HEIGHT // 20 * 2))
         # ==================================
 
@@ -108,7 +81,7 @@ class Clicker:
         if self.cps:
             font = pygame.font.Font("Fonts/beer money.ttf", self.font_size)
             font_color = COLORS['soft white']
-            text = font.render(f'Клики в секунду: {to_fixed(self.cps, 2)}', True,
+            text = font.render(f'{LANG_DATA[LANG_INDEX]["CPS"]}: {to_fixed(self.cps, 2)}', True,
                                font_color)
             screen.blit(text, (40, WINDOW_HEIGHT // 20 * 3))
         # ==================================
@@ -161,7 +134,7 @@ class Clicker:
         """Метод этого класса вернёт список с информацией о данном классе
                 (нужен для работы с сохранениями)"""
         return [self.is_paused, self.score, to_fixed(self.money, 3), self.click, self.cps,
-                self.skin_path, self.color]
+                self.skin_path, self.color, LANG_INDEX]
 
 
 class Button:
@@ -240,16 +213,16 @@ class MainMenu:
         self.font_size = WINDOW_WIDTH // (WINDOW_WIDTH // 24)
         self.pause_button_size = WINDOW_WIDTH // 3, WINDOW_HEIGHT // 13.32
         self.buttons_titles = {
-            0: ('Продолжить сохранённую игру', WINDOW_HEIGHT * 0.2929),
-            1: ('Новая игра (необратимо)', WINDOW_HEIGHT * 0.3906),
-            2: ('Выйти из игры', WINDOW_HEIGHT * 0.4882)
+            0: (f'{LANG_DATA[LANG_INDEX]["Continue saved game"]}', WINDOW_HEIGHT * 0.2929),
+            1: (f'{LANG_DATA[LANG_INDEX]["New game"]}', WINDOW_HEIGHT * 0.3906),
+            2: (f'{LANG_DATA[LANG_INDEX]["Quit"]}', WINDOW_HEIGHT * 0.4882)
         }
 
     def render(self):
         """Отрисовка главного меню"""
         font = pygame.font.Font("Fonts/beer money.ttf", self.font_size)
         font_color = (255, 255, 255)
-        text = font.render('V 0.9 (One language release)', True, font_color)
+        text = font.render('V 1.0', True, font_color)
         SURFACE.fill((100, 100, 100, 100))
         SURFACE.blit(text, (10, WINDOW_HEIGHT - text.get_height()))
         self.draw_buttons()
@@ -287,9 +260,11 @@ class Pause:
         self.pause_button_size = WINDOW_WIDTH // 3, WINDOW_HEIGHT // 13.32
         self.buttons_titles = {
             0: ((WINDOW_WIDTH / 38, WINDOW_HEIGHT / 1.3 - int(WINDOW_WIDTH / 20),
-                 int(WINDOW_WIDTH / 9), int(WINDOW_HEIGHT / 14)), 'В главное меню'),
+                 int(WINDOW_WIDTH / 9), int(WINDOW_HEIGHT / 14)),
+                f'{LANG_DATA[LANG_INDEX]["Main menu"]}'),
             1: ((WINDOW_WIDTH / 38, WINDOW_HEIGHT / 1.3 - int(WINDOW_WIDTH / 20) * 2,
-                 int(WINDOW_WIDTH / 9), int(WINDOW_HEIGHT / 14)), 'Язык: русский', False)
+                 int(WINDOW_WIDTH / 9), int(WINDOW_HEIGHT / 14)),
+                f'{LANG_DATA[LANG_INDEX]["Language"]}')
             # 1: ('Новая игра', WINDOW_HEIGHT * 0.3906),
             # 2: ('В главное меню', WINDOW_HEIGHT * 0.4394)
         }
@@ -298,7 +273,7 @@ class Pause:
         """ Отрисовка окна паузы """
         font = pygame.font.Font("Fonts/beer money.ttf", self.font_size)
         font_color = (255, 255, 255)
-        text = font.render('Игра на паузе', True, font_color)
+        text = font.render(f'{LANG_DATA[LANG_INDEX]["Game is paused"]}', True, font_color)
         SURFACE.fill((100, 100, 100, 100))
         SURFACE.blit(text, (WINDOW_WIDTH // (WINDOW_WIDTH // 40),
                             WINDOW_HEIGHT // WINDOW_HEIGHT // 120))
@@ -309,14 +284,17 @@ class Pause:
         """Отрисовка кнопок в меню паузы и реализация остановки или продолжения работы программы"""
         for i in range(len(self.buttons_titles)):
             btn = Button(screen, *self.buttons_titles[i])
-            if btn.is_button_enter() and event.type == pygame.MOUSEBUTTONDOWN:
+            if btn.is_button_enter() and click:
+                global is_menu
 
-                # if i == 0:  # Кнопка продолжения игры
-                #     clicker.switch_pause()
+                if i == 1:  # Кнопка продолжения игры
+                    global LANG_INDEX
+                    LANG_INDEX = (LANG_INDEX + 1) % LANG_LEN
+                    break
 
                 if i == 0:  # Кнопка выхода в главное меню игры
-                    global is_menu
                     is_menu = True
+        return
 
 
 class RightMenu:
@@ -345,13 +323,14 @@ class RightMenu:
         # =============Отрисовка кнопки раздела скинов (кастомизации) элементов==============
         self.skins_button = Button(screen, (WINDOW_WIDTH / 1.55 - A * 2, WINDOW_HEIGHT / 1.14,
                                             int(WINDOW_WIDTH / 9), int(WINDOW_HEIGHT / 14)),
-                                   'Скины')
+                                   f'{LANG_DATA[LANG_INDEX]["Skins"]}')
         # =============Отрисовка кнопки раздела скинов (кастомизации) элементов==============
 
         # =============Отрисовка кнопки раздела ускорителей накопления кликов или монет=============
         self.boosters_button = Button(screen, (WINDOW_WIDTH / 1.25 - A * 2,
                                                WINDOW_HEIGHT / 1.14, int(WINDOW_WIDTH / 9),
-                                               int(WINDOW_HEIGHT / 14)), 'Ускорители')
+                                               int(WINDOW_HEIGHT / 14)),
+                                      f'{LANG_DATA[LANG_INDEX]["Boosters"]}')
         # =============Отрисовка кнопки раздела ускорителей накопления кликов или монет=============
 
     def show_animation(self, items, colors, boosters):
@@ -545,6 +524,42 @@ def buy_booster():
 
 if __name__ == '__main__':  # Запуск игры.
 
+    # =========Эта часть кода определяет размер окна пользователя============
+    pygame.init()
+    WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = pygame.display.Info().current_w, \
+                                                pygame.display.Info().current_h
+    # print(pygame.display.Info().current_w, pygame.display.Info().current_h)
+    SURFACE = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
+    pygame.quit()
+    # =========Эта часть кода определяет размер окна пользователя============
+
+    # =========Эта часть кода определяет константы, необходимые для работы программы============
+    COLORS = {
+        'blue azure': (42, 82, 190),  # Цвет заполнения заднего фона элементов интерфейса (кнопки).
+        'black': (0, 0, 0),  # Цвет border элементов интерфейса.
+        'soft white': (200, 200, 200),  # Цвет шрифта.
+        'soft yellow': (200, 200, 0),  # Цвет шрифта.
+        'dark gray': (20, 20, 20)  # Цвет магазина.
+    }
+
+    TIMER_EVENT = pygame.USEREVENT + 1
+    AUTO_CLICK_EVENT = pygame.USEREVENT + 2
+    TIMER_EVENT_DELAY = 75
+    AUTO_CLICK_DELAY = 1000
+    SKINS_SHOWING = True
+    cursor_clicked = False
+
+    # =========Эта часть кода определяет константы, необходимые для работы программы============
+
+    # =========Тут подгружаются все языки============
+
+    with open('data/lang.csv', encoding="utf8") as csvfile:
+        LANG_DATA = list(csv.DictReader(csvfile, delimiter=',', quotechar='"')).copy()
+
+    LANG_INDEX = 1
+    LANG_LEN = len(LANG_DATA)
+    # ===============================================
+
     # Подготовка к запуску игрового цикла:
     pygame.init()
     pygame.mouse.set_visible(False)
@@ -558,10 +573,12 @@ if __name__ == '__main__':  # Запуск игры.
     try:
         with open('data/clicker.json') as file:
             data = json.load(file)
-        # data = dbSaver.download('data/save_data_1.db')
-        clicker = Clicker(data)
+        clicker = Clicker(data[:-1])
+        LANG_INDEX = data[-1]
     except FileNotFoundError:
         new_game = True
+    except ValueError:
+        clicker = Clicker(data)
 
     try:
         with open('data/shop.json') as file:
@@ -569,9 +586,6 @@ if __name__ == '__main__':  # Запуск игры.
         shop = Shop(data)
     except FileNotFoundError:
         new_game = True
-
-    pause = Pause()
-    main_menu = MainMenu()
 
     A = -WINDOW_WIDTH  # доп. переменная, отвечающая за положение магазина во время анимации
 
@@ -585,6 +599,7 @@ if __name__ == '__main__':  # Запуск игры.
     clock = pygame.time.Clock()
     v = 1500
     c = 0
+    fps = 60
     pygame.time.set_timer(TIMER_EVENT, TIMER_EVENT_DELAY)
     pygame.time.set_timer(AUTO_CLICK_EVENT, AUTO_CLICK_DELAY)
 
@@ -599,6 +614,8 @@ if __name__ == '__main__':  # Запуск игры.
             pygame.time.set_timer(TIMER_EVENT, TIMER_EVENT_DELAY)
             pygame.time.set_timer(AUTO_CLICK_EVENT, AUTO_CLICK_DELAY)
         else:
+            pause = Pause()
+            main_menu = MainMenu()
             MONEY = clicker.money
             click = False
             for event in pygame.event.get():
@@ -633,16 +650,17 @@ if __name__ == '__main__':  # Запуск игры.
             if clicker.is_paused:
                 pause_button = Button(screen, (WINDOW_WIDTH / 38, WINDOW_HEIGHT / 1.3,
                                                int(WINDOW_WIDTH / 9), int(WINDOW_HEIGHT / 14)),
-                                      'Продолжить')
+                                      f'{LANG_DATA[LANG_INDEX]["Continue"]}')
                 screen.blit(pause.render(), (0, 0))
                 right_menu_is_open = False
             else:
                 pause_button = Button(screen, (WINDOW_WIDTH / 38, WINDOW_HEIGHT / 1.3,
                                                int(WINDOW_WIDTH / 9), int(WINDOW_HEIGHT / 14)),
-                                      'Пауза')
+                                      f'{LANG_DATA[LANG_INDEX]["Pause"]}')
                 shop_button = Button(screen, (
                     WINDOW_WIDTH / 38, WINDOW_HEIGHT / 1.3 + int(WINDOW_WIDTH / 20),
-                    int(WINDOW_WIDTH / 9), int(WINDOW_HEIGHT / 14)), 'Магазин',
+                    int(WINDOW_WIDTH / 9), int(WINDOW_HEIGHT / 14)),
+                                     f'{LANG_DATA[LANG_INDEX]["Market"]}',
                                      not clicker.is_paused)
                 if SKINS_SHOWING:
                     for elem in points:
@@ -683,9 +701,9 @@ if __name__ == '__main__':  # Запуск игры.
                 screen.fill((20, 20, 20))
                 screen.blit(main_menu.render(), (0, 0))
             if right_menu_is_open:
-                A = min(A + v * clock.tick() / 1000, 0)
+                A = min(A + v * clock.tick(fps) / 1000, 0)
             else:
-                A = max(A - v * clock.tick() / 1000, -WINDOW_WIDTH // 2)
+                A = max(A - v * clock.tick(fps) / 1000, -WINDOW_WIDTH // 2)
             if cursor:
                 cursor = pygame.transform.scale(cursor, (WINDOW_WIDTH // (WINDOW_WIDTH // 45),
                                                          WINDOW_WIDTH // (WINDOW_WIDTH // 35)))
